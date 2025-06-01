@@ -1,0 +1,41 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000" # Expose backend on host port 3000
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      # - DATABASE_URL=... # If using external DB in future
+    volumes:
+      - ./backend/familytree.sqlite:/usr/src/app/familytree.sqlite # Persist SQLite DB
+    networks:
+      - familytree-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80" # Expose frontend on host port 8080
+    depends_on:
+      - backend # Optional: ensures backend starts first, but app should handle backend unavailability
+    networks:
+      - familytree-net
+    # environment: # Example if frontend needed runtime env vars for API
+      # - VITE_API_BASE_URL=http://localhost:3000/api # For local Docker Compose access through host
+      # If frontend calls backend via 'http://backend:3000/api', no VITE_API_BASE_URL needed here,
+      # but that needs to be baked into the frontend build or configured at runtime.
+      # Vite's default is to bake in env vars starting with VITE_ at build time.
+      # For Docker, the frontend built in its Dockerfile will call whatever URL it was built with.
+      # If it was built with 'http://localhost:3000/api', it will try to call the host's port 3000,
+      # which is mapped to the backend container. This should work for this setup.
+
+networks:
+  familytree-net:
+    driver: bridge
