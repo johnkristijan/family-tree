@@ -14,16 +14,22 @@ Follow these instructions to get the application running on your local machine f
 
 ### Prerequisites
 
-1.  **Node.js and npm**:
-    *   Ensure you have Node.js (which includes npm) installed. LTS version is recommended.
-    *   You can download it from [nodejs.org](https://nodejs.org/) or install it using Homebrew:
+1.  **Node.js and yarn**:
+    *   Ensure you have Node.js and yarn installed. LTS version of Node.js is recommended.
+    *   You can download Node.js from [nodejs.org](https://nodejs.org/) or install it using Homebrew:
         ```bash
         brew install node
+        ```
+    *   Install yarn using npm (if you have it) or Homebrew:
+        ```bash
+        npm install --global yarn
+        # OR
+        brew install yarn
         ```
     *   Verify installation:
         ```bash
         node -v
-        npm -v
+        yarn --version
         ```
 
 2.  **Git**:
@@ -48,14 +54,14 @@ The backend server handles API requests and database interactions.
 cd backend
 
 # Install dependencies
-npm install
+yarn install
 
 # (Optional) Build TypeScript (if you prefer running compiled JS, or for specific scripts)
-# The dev server (npm start) uses ts-node, so this isn't strictly needed for 'start'.
+# The dev server (yarn start) uses ts-node, so this isn't strictly needed for 'start'.
 # npm run build
 
 # Start the development server (usually on http://localhost:3000)
-npm start
+yarn start
 ```
 The backend server will connect to/create the `familytree.sqlite` database file in the `backend` directory. You should see log messages indicating the server is running and the database is connected/initialized.
 
@@ -68,10 +74,10 @@ The frontend application provides the user interface.
 cd frontend
 
 # Install dependencies
-npm install
+yarn install
 
 # Start the Vite development server (usually on http://localhost:5173 or another port)
-npm run dev
+yarn dev
 ```
 Vite will output the local URL where the frontend is being served. Open this URL in your web browser.
 
@@ -89,7 +95,7 @@ To populate the database with some initial sample data:
 cd backend
 
 # Run the seed script
-npm run db:seed
+yarn db:seed
 ```
 This will add a few sample individuals to the `persons` table.
 
@@ -102,7 +108,7 @@ To clear all data from the `persons` and `relationships` tables (and reset auto-
 cd backend
 
 # Run the unseed script
-npm run db:unseed
+yarn db:unseed
 ```
 
 ## Next Steps / Future Development

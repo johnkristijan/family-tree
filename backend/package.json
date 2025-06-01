@@ -8,8 +8,8 @@
     "start": "ts-node src/server.ts",
     "build": "tsc",
     "serve": "node dist/server.js",
-		"db:seed": "ts-node src/scripts/seed.ts",
-		"db:unseed": "ts-node src/scripts/unseed.ts"
+    "db:seed": "ts-node src/scripts/seed.ts",
+    "db:unseed": "ts-node src/scripts/unseed.ts"
   },
   "keywords": [],
   "author": "",
