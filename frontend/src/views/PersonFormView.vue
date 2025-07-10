@@ -160,7 +160,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { useAuthStore } from '@/stores/auth';
 import InputText from 'primevue/inputtext';
 import Calendar from 'primevue/calendar';
 import Dropdown from 'primevue/dropdown';
@@ -232,7 +231,6 @@ const allPersons = ref<Person[]>([]);
 
 const router = useRouter();
 const route = useRoute();
-const authStore = useAuthStore();
 const toast = useToast();
 const confirm = useConfirm();
 

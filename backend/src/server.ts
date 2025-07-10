@@ -25,10 +25,11 @@ app.post('/api/login', (req: Request, res: Response) => {
 // ===== PERSONS CRUD ROUTES =====
 
 // CREATE a new person
-app.post('/api/persons', (req: Request, res: Response) => {
+app.post('/api/persons', (req: Request, res: Response): void => {
   const { first_name, last_name, middle_name, birth_date, death_date, gender, bio, profile_picture_url } = req.body;
   if (!first_name) {
-    return res.status(400).json({ message: 'First name is required' });
+    res.status(400).json({ message: 'First name is required' });
+    return;
   }
   const sql = `INSERT INTO persons (first_name, last_name, middle_name, birth_date, death_date, gender, bio, profile_picture_url)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
@@ -72,11 +73,12 @@ app.get('/api/persons/:id', (req: Request, res: Response) => {
 });
 
 // UPDATE a person by ID
-app.put('/api/persons/:id', (req: Request, res: Response) => {
+app.put('/api/persons/:id', (req: Request, res: Response): void => {
   const { id } = req.params;
   const { first_name, last_name, middle_name, birth_date, death_date, gender, bio, profile_picture_url } = req.body;
   if (!first_name) {
-    return res.status(400).json({ message: 'First name is required' });
+    res.status(400).json({ message: 'First name is required' });
+    return;
   }
   const sql = `UPDATE persons SET
                first_name = ?, last_name = ?, middle_name = ?,
@@ -117,15 +119,17 @@ app.delete('/api/persons/:id', (req: Request, res: Response) => {
 
 // ADD a relationship for a person
 // person1_id is the person from the URL param, person2_id is the relatedPersonId from the body
-app.post('/api/persons/:personId/relationships', (req: Request, res: Response) => {
+app.post('/api/persons/:personId/relationships', (req: Request, res: Response): void => {
   const person1_id = parseInt(req.params.personId, 10);
   const { relatedPersonId, relationshipType, startDate, endDate } = req.body;
 
   if (!relatedPersonId || !relationshipType) {
-    return res.status(400).json({ message: 'relatedPersonId and relationshipType are required.' });
+    res.status(400).json({ message: 'relatedPersonId and relationshipType are required.' });
+    return;
   }
   if (person1_id === relatedPersonId) {
-    return res.status(400).json({ message: 'Cannot create a relationship with oneself.' });
+    res.status(400).json({ message: 'Cannot create a relationship with oneself.' });
+    return;
   }
 
   // To avoid duplicate relationships (e.g. A is parent of B, and B is child of A),
@@ -139,12 +143,13 @@ app.post('/api/persons/:personId/relationships', (req: Request, res: Response) =
 
   db.run(sql, params, function (err) {
     if (err) {
-      console.error('Error creating relationship:', err.message);
       // Check for UNIQUE constraint error
       if (err.message.includes('UNIQUE constraint failed')) {
-        return res.status(409).json({ message: 'This relationship already exists.', error: err.message });
+        res.status(409).json({ message: 'This relationship already exists.', error: err.message });
+        return;
       }
-      return res.status(500).json({ message: 'Failed to create relationship', error: err.message });
+      res.status(500).json({ message: 'Failed to create relationship', error: err.message });
+      return;
     }
     res.status(201).json({
       message: 'Relationship created successfully',

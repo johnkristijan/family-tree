@@ -4,11 +4,10 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import PrimeVue from 'primevue/config';
-import Aura from '@primevue/themes/aura';
+import Aura from '@primeuix/themes/aura';
 import ToastService from 'primevue/toastservice'; // New
 import ConfirmationService from 'primevue/confirmationservice'; // New
 
-import 'primevue/resources/primevue.min.css';
 import 'primeicons/primeicons.css';
 import 'primeflex/primeflex.css';
 
@@ -19,7 +18,12 @@ app.use(pinia)
 app.use(router)
 app.use(PrimeVue, {
     theme: {
-        preset: Aura
+        preset: Aura,
+        options: {
+            prefix: 'p',
+            darkModeSelector: 'system',
+            cssLayer: false
+        }
     }
 });
 app.use(ToastService); // New
