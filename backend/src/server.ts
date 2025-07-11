@@ -26,14 +26,14 @@ app.post('/api/login', (req: Request, res: Response) => {
 
 // CREATE a new person
 app.post('/api/persons', (req: Request, res: Response): void => {
-  const { first_name, last_name, middle_name, birth_date, death_date, gender, bio, profile_picture_url } = req.body;
+  const { first_name, last_name, maiden_name, birth_date, death_date, gender, bio, profession, main_photo, location } = req.body;
   if (!first_name) {
     res.status(400).json({ message: 'First name is required' });
     return;
   }
-  const sql = `INSERT INTO persons (first_name, last_name, middle_name, birth_date, death_date, gender, bio, profile_picture_url)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-  const params = [first_name, last_name, middle_name, birth_date, death_date, gender, bio, profile_picture_url];
+  const sql = `INSERT INTO persons (first_name, last_name, maiden_name, birth_date, death_date, gender, bio, profession, main_photo, location)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  const params = [first_name, last_name, maiden_name, birth_date, death_date, gender, bio, profession, main_photo, location];
   db.run(sql, params, function (err) {
     if (err) {
       console.error('Error creating person:', err.message);
@@ -75,17 +75,17 @@ app.get('/api/persons/:id', (req: Request, res: Response) => {
 // UPDATE a person by ID
 app.put('/api/persons/:id', (req: Request, res: Response): void => {
   const { id } = req.params;
-  const { first_name, last_name, middle_name, birth_date, death_date, gender, bio, profile_picture_url } = req.body;
+  const { first_name, last_name, maiden_name, birth_date, death_date, gender, bio, profession, main_photo, location } = req.body;
   if (!first_name) {
     res.status(400).json({ message: 'First name is required' });
     return;
   }
   const sql = `UPDATE persons SET
-               first_name = ?, last_name = ?, middle_name = ?,
+               first_name = ?, last_name = ?, maiden_name = ?,
                birth_date = ?, death_date = ?, gender = ?,
-               bio = ?, profile_picture_url = ?
+               bio = ?, profession = ?, main_photo = ?, location = ?
                WHERE id = ?`;
-  const params = [first_name, last_name, middle_name, birth_date, death_date, gender, bio, profile_picture_url, id];
+  const params = [first_name, last_name, maiden_name, birth_date, death_date, gender, bio, profession, main_photo, location, id];
   db.run(sql, params, function (err) {
     if (err) {
       console.error('Error updating person:', err.message);

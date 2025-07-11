@@ -1,134 +1,42 @@
 // backend/src/scripts/seed.ts
 import db from '../config/database'; // Adjust path as necessary
+import * as fs from 'fs';
+import * as path from 'path';
 
-const seedPersons = [
-  {
-    id: 1,
-    first_name: 'Johann',
-    last_name: 'Herrmann',
-    birth_date: '1880-03-15',
-    death_date: '1955-07-20',
-    gender: 'Male',
-    bio: 'Patriarch of the Herrmann family. Farmer in rural Germany.',
-  },
-  {
-    id: 2,
-    first_name: 'Anna',
-    last_name: 'Herrmann', // Maiden name Schmidt
-    birth_date: '1885-09-22',
-    death_date: '1960-01-10',
-    gender: 'Female',
-    bio: 'Matriarch of the Herrmann family. Married Johann in 1905.',
-  },
-  {
-    id: 3,
-    first_name: 'Wilhelm',
-    last_name: 'Herrmann',
-    birth_date: '1906-06-05',
-    death_date: '1975-11-30',
-    gender: 'Male',
-    bio: 'Eldest son of Johann and Anna. Took over the family farm.',
-  },
-  {
-    id: 4,
-    first_name: 'Frieda',
-    last_name: 'Schulz', // Married name
-    birth_date: '1908-11-12',
-    death_date: '1982-03-25',
-    gender: 'Female',
-    bio: 'Daughter of Johann and Anna. Moved to Berlin after marriage.',
-  },
-  {
-    id: 5,
-    first_name: 'Karl',
-    last_name: 'Herrmann',
-    birth_date: '1930-01-20',
-    death_date: '2005-09-15',
-    gender: 'Male',
-    bio: 'Son of Wilhelm. Continued farming.',
-  },
-  {
-    id: 6,
-    first_name: 'Sophie',
-    last_name: 'Herrmann', // Maiden name Weber
-    birth_date: '1933-07-14',
-    death_date: '2010-06-01',
-    gender: 'Female',
-    bio: 'Wife of Karl Herrmann. Known for her baking.',
-  },
-  {
-    id: 7,
-    first_name: 'Peter',
-    last_name: 'Schulz',
-    birth_date: '1932-04-01',
-    death_date: '1999-12-05',
-    gender: 'Male',
-    bio: 'Son of Frieda. Worked as a tailor in Berlin.',
-  },
-  {
-    id: 8,
-    first_name: 'Hans',
-    last_name: 'Herrmann',
-    birth_date: '1955-08-10',
-    death_date: null, // Still alive
-    gender: 'Male',
-    bio: 'Son of Karl and Sophie. Moved to Norway in the 1970s.',
-  },
-  {
-    id: 9,
-    first_name: 'Greta',
-    last_name: 'Herrmann', // Maiden name Olsen
-    birth_date: '1958-05-20',
-    death_date: null, // Still alive
-    gender: 'Female',
-    bio: 'Wife of Hans Herrmann. Met Hans in Oslo.',
-  },
-  {
-    id: 10,
-    first_name: 'Klaus',
-    last_name: 'Herrmann',
-    birth_date: '1980-11-15',
-    death_date: null, // Still alive
-    gender: 'Male',
-    bio: 'Son of Hans and Greta. Lives in Bergen.',
-  },
-  {
-    id: 11,
-    first_name: 'Astrid',
-    last_name: 'Jensen', // Married name
-    birth_date: '1983-02-28',
-    death_date: null, // Still alive
-    gender: 'Female',
-    bio: 'Daughter of Hans and Greta. Married and lives in Oslo.',
-  },
-  {
-    id: 12,
-    first_name: 'Erik',
-    last_name: 'Herrmann',
-    birth_date: '2005-06-25',
-    death_date: null, // Still alive
-    gender: 'Male',
-    bio: 'Son of Klaus. Student.',
-  },
-  {
-    id: 13,
-    first_name: 'Lars',
-    last_name: 'Jensen',
-    birth_date: '1980-09-10',
-    death_date: null, // Still alive
-    gender: 'Male',
-    bio: 'Husband of Astrid Jensen. Works as an engineer.',
-  },
-  {
-    id: 14,
-    first_name: 'Ingrid',
-    last_name: 'Jensen',
-    birth_date: '2010-03-03',
-    death_date: null, // Still alive
-    gender: 'Female',
-    bio: 'Daughter of Astrid and Lars Jensen.',
-  }
-];
+// Read the seed data from both JSON files
+const seedFilePath1 = path.resolve(__dirname, '../family_seed.json');
+const seedFilePath2 = path.resolve(__dirname, '../family_seed2.json');
+let seedPersons: any[] = [];
+
+try {
+  const seedData1 = fs.readFileSync(seedFilePath1, 'utf8');
+  const seedData2 = fs.readFileSync(seedFilePath2, 'utf8');
+  
+  const persons1 = JSON.parse(seedData1);
+  const persons2 = JSON.parse(seedData2);
+  
+  // Filter out entries that don't have required fields (like incomplete location entries)
+  const validPersons1 = persons1.filter((person: any) => 
+    person.first_name && typeof person.first_name === 'string'
+  );
+  const validPersons2 = persons2.filter((person: any) => 
+    person.first_name && typeof person.first_name === 'string'
+  );
+  
+  // Remove id field from all persons so database can auto-generate
+  const cleanPersons1 = validPersons1.map(({ id, ...person }: any) => person);
+  const cleanPersons2 = validPersons2.map(({ id, ...person }: any) => person);
+  
+  // Combine both datasets
+  seedPersons = [...cleanPersons1, ...cleanPersons2];
+  
+  console.log(`Loaded ${validPersons1.length} persons from ${seedFilePath1}`);
+  console.log(`Loaded ${validPersons2.length} persons from ${seedFilePath2}`);
+  console.log(`Total ${seedPersons.length} persons to insert`);
+} catch (error) {
+  console.error('Error reading seed files:', error);
+  process.exit(1);
+}
 
 const seedDatabase = async () => {
   console.log('Seeding database...');
@@ -142,11 +50,17 @@ const seedDatabase = async () => {
       CREATE TABLE persons (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         first_name TEXT NOT NULL,
-        last_name TEXT NOT NULL,
-        birth_date TEXT, -- Assuming YYYY-MM-DD
-        death_date TEXT, -- Assuming YYYY-MM-DD, can be NULL
+        last_name TEXT,
+        maiden_name TEXT, -- Last name at birth
+        birth_date TEXT, -- Store dates as TEXT in ISO8601 format (YYYY-MM-DD)
+        death_date TEXT,
         gender TEXT,
-        bio TEXT
+        bio TEXT,
+        profession TEXT,
+        main_photo TEXT,
+        location TEXT,
+        created_at TEXT DEFAULT (STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW')),
+        updated_at TEXT DEFAULT (STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))
       )
     `, (err: Error | null) => {
       if (err) {
@@ -156,24 +70,30 @@ const seedDatabase = async () => {
       console.log("Persons table created (or already existed and was cleared).");
 
       const stmt = db.prepare(`
-        INSERT INTO persons (id, first_name, last_name, birth_date, death_date, gender, bio)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO persons (first_name, last_name, maiden_name, birth_date, death_date, gender, bio, profession, main_photo, location)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
       for (const person of seedPersons) {
+        // Handle maiden_name field - set to null if not present
+        const maidenName = person.maiden_name || null;
+        
         stmt.run(
-          person.id,
           person.first_name,
           person.last_name,
+          maidenName,
           person.birth_date,
           person.death_date,
           person.gender,
           person.bio,
+          person.profession,
+          person.main_photo,
+          person.location,
           (err: Error | null) => {
             if (err) {
               console.error('Error inserting person:', person.first_name, err.message);
             } else {
-              console.log(`Inserted person: ${person.first_name} ${person.last_name} with ID ${person.id}`);
+              console.log(`Inserted person: ${person.first_name} ${person.last_name}`);
             }
           }
         );
@@ -181,6 +101,19 @@ const seedDatabase = async () => {
       stmt.finalize((err: Error | null) => {
         if (err) console.error('Error finalizing statement:', err.message);
         else console.log('Finished inserting persons.');
+        
+        // Add the trigger for updated_at
+        db.run(`
+          CREATE TRIGGER IF NOT EXISTS update_persons_updated_at
+          AFTER UPDATE ON persons
+          FOR EACH ROW
+          BEGIN
+              UPDATE persons SET updated_at = STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW') WHERE id = OLD.id;
+          END;
+        `, (err: Error | null) => {
+          if (err) console.error('Error creating trigger for persons:', err.message);
+          else console.log('Trigger for persons table updated_at created or already exists.');
+        });
       });
     });
 
