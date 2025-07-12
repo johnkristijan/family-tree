@@ -2,15 +2,38 @@
 import express, { Request, Response } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 import db from './config/database'; // Import the initialized DB connection
 
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Ensure upload directory exists
+const uploadDir = path.join(__dirname, '../public/uploads');
+if (!fs.existsSync(uploadDir)){
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Multer storage configuration
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage: storage });
+
 // Middleware
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(uploadDir)); // Serve uploaded files
 
 // ===== AUTH ROUTES =====
 app.post('/api/login', (req: Request, res: Response) => {
@@ -95,6 +118,41 @@ app.put('/api/persons/:id', (req: Request, res: Response): void => {
       return res.status(404).json({ message: 'Person not found or no changes made' });
     }
     res.status(200).json({ message: 'Person updated successfully', id: Number(id), changes: this.changes });
+  });
+});
+
+// UPLOAD photo for a person
+// Handles multipart/form-data image upload for a specific person.
+// Expects a single file in a field named 'photo'.
+// On success, updates the person's 'main_photo' field with the URL of the uploaded image
+// and returns the new photo URL and personId.
+// Images are stored in `backend/public/uploads/` and served via `/uploads/*`.
+app.post('/api/persons/:id/upload-photo', upload.single('photo'), (req: Request, res: Response) => {
+  const { id } = req.params;
+  if (!req.file) {
+    return res.status(400).json({ message: 'No file uploaded.' });
+  }
+
+  // Construct the URL of the uploaded file
+  // Ensure the base URL matches how your frontend will access it.
+  // If your backend and frontend are served from the same domain and port eventually,
+  // a relative path like '/uploads/${req.file.filename}' would be more robust.
+  // For localhost development, an absolute URL is fine.
+  const photoUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+
+  const sql = `UPDATE persons SET main_photo = ? WHERE id = ?`;
+  db.run(sql, [photoUrl, id], function (err) {
+    if (err) {
+      console.error('Error updating person photo in DB:', err.message);
+      // Consider deleting the uploaded file if DB update fails to prevent orphaned files
+      // fs.unlink(req.file.path, unlinkErr => { if (unlinkErr) console.error('Error deleting file after DB fail:', unlinkErr); });
+      return res.status(500).json({ message: 'Failed to update person photo information.', error: err.message });
+    }
+    if (this.changes === 0) {
+      // Also consider deleting file if person not found
+      return res.status(404).json({ message: 'Person not found.' });
+    }
+    res.status(200).json({ message: 'Photo uploaded and person updated successfully.', main_photo: photoUrl, personId: id });
   });
 });
 

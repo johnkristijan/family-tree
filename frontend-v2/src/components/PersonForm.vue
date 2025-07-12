@@ -124,7 +124,7 @@
             />
           </div>
 
-          <!-- Main Photo URL -->
+          <!-- Main Photo URL (Read-only, populated by upload) -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">
               Main Photo URL
@@ -132,9 +132,29 @@
             <input 
               v-model="form.main_photo"
               type="url" 
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="https://example.com/main-photo.jpg"
+              readonly
+              class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Will be populated after photo upload"
             />
+          </div>
+
+          <!-- Photo Upload -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Upload New Photo
+            </label>
+            <input
+              type="file"
+              @change="handlePhotoUpload"
+              accept="image/*"
+              class="w-full text-sm text-gray-500
+                     file:mr-4 file:py-2 file:px-4
+                     file:rounded-md file:border-0
+                     file:text-sm file:font-semibold
+                     file:bg-blue-50 file:text-blue-700
+                     hover:file:bg-blue-100"
+            />
+            <p v-if="photoFile" class="text-xs text-gray-500 mt-1">Selected: {{ photoFile.name }}</p>
           </div>
 
           <!-- Biography -->
@@ -198,6 +218,7 @@ export default {
   setup(props, { emit }) {
     const loading = ref(false)
     const error = ref('')
+    const photoFile = ref(null) // To store the selected file object
     
     const form = ref({
       first_name: '',
@@ -234,7 +255,18 @@ export default {
         isEditing.value = false
         resetForm()
       }
+      photoFile.value = null // Reset photo file when person changes or form is for new person
     }, { immediate: true })
+
+    function handlePhotoUpload(event) {
+      const file = event.target.files[0]
+      if (file) {
+        photoFile.value = file
+        // Optionally, clear the main_photo URL if a new file is selected,
+        // or let the backend handle updating it.
+        // form.value.main_photo = ''
+      }
+    }
 
     function resetForm() {
       form.value = {
@@ -250,10 +282,11 @@ export default {
         bio: ''
       }
       error.value = ''
+      photoFile.value = null
     }
 
     function closeModal() {
-      resetForm()
+      resetForm() // This will also reset photoFile
       emit('close')
     }
 
@@ -267,9 +300,12 @@ export default {
       error.value = ''
 
       try {
+        // Photo upload logic will be handled in step 4.
+        // For now, we just emit the form data.
+        // The photoFile.value will be used in the next step.
         await emit('submit', { 
-          ...form.value,
-          id: props.person?.id 
+          personData: { ...form.value, id: props.person?.id },
+          photoToUpload: photoFile.value
         })
         closeModal()
       } catch (err) {
@@ -284,6 +320,8 @@ export default {
       loading,
       error,
       isEditing,
+      photoFile,
+      handlePhotoUpload,
       closeModal,
       submitForm
     }

@@ -43,8 +43,20 @@
         <div class="bg-white rounded-lg shadow-lg overflow-hidden">
           <div class="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-8">
             <div class="flex items-center">
-              <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center text-2xl font-bold text-blue-600 mr-6">
-                {{ getInitials(person.first_name, person.last_name) }}
+              <!-- Profile Image or Initials -->
+              <div
+                class="w-24 h-24 rounded-full flex items-center justify-center text-3xl font-bold text-blue-600 mr-6 overflow-hidden shadow-md border-4 border-white"
+                :class="person.main_photo ? 'bg-gray-200' : 'bg-white'"
+              >
+                <img
+                  v-if="person.main_photo"
+                  :src="person.main_photo"
+                  :alt="`${person.first_name} ${person.last_name}`"
+                  class="w-full h-full object-cover"
+                />
+                <span v-else>
+                  {{ getInitials(person.first_name, person.last_name) }}
+                </span>
               </div>
               <div>
                 <h1 class="text-3xl font-bold text-white">

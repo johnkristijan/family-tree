@@ -65,6 +65,8 @@ yarn start
 ```
 The backend server will connect to/create the `familytree.sqlite` database file in the `backend` directory. You should see log messages indicating the server is running and the database is connected/initialized.
 
+**Image Uploads**: Uploaded images for person profiles are stored in the `backend/public/uploads/` directory and served statically by the backend.
+
 ### 3. Setup and Run Frontend Application
 
 The frontend application provides the user interface.
