@@ -119,14 +119,16 @@ cd frontend-v2
 yarn build
 firebase projects:list
 firebase use herrmann-family-tree
-firebase deploy --only hosting
+firebase deploy
 
 ### Backend
 _This is hosted on Ubuntu VM with nginx reverse proxy to 127.0.0.1:3000 from backend.herrmann.no_
 ssh dellserver@<your-server-ip>
 cd family-tree/backend
-npm install
-npm start
+git pull
+sudo systemctl daemon-reload
+sudo systemctl restart family-tree-backend
+sudo journalctl -u herrmann-backend.service -f
 
 
 ## Next Steps / Future Development
