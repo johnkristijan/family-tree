@@ -268,6 +268,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { useRelationshipsStore } from '../stores/relationships'
 import apiService from '../services/api'
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+
 export default {
   name: 'FamilyTreeView',
   setup() {
@@ -409,7 +411,7 @@ export default {
       
       // If it's a relative URL (uploaded photo), prepend the API URL
       if (url.startsWith('/uploads/')) {
-        return `http://localhost:3000${url}`
+        return `${API_BASE_URL}${url}`
       }
       // Otherwise return as is (external URL)
       return url

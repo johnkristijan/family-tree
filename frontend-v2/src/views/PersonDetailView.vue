@@ -388,6 +388,8 @@ import AddRelationship from '../components/AddRelationship.vue'
 import PersonForm from '../components/PersonForm.vue'
 import { useToast } from '../composables/useToast'
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+
 export default {
   name: 'PersonDetailView',
   components: {
@@ -540,7 +542,7 @@ export default {
       if (!url) return null
       // If it's a relative URL (uploaded photo), prepend the API URL
       if (url.startsWith('/uploads/')) {
-        return `http://localhost:3000${url}`
+        return `${API_BASE_URL}${url}`
       }
       // Otherwise return as is (external URL)
       return url
@@ -581,7 +583,7 @@ export default {
       formData.append('photo', selectedFile.value)
 
       try {
-        const response = await fetch(`http://localhost:3000/api/persons/${route.params.id}/photo`, {
+        const response = await fetch(`${API_BASE_URL}/api/persons/${route.params.id}/photo`, {
           method: 'POST',
           body: formData,
           // Track upload progress
@@ -619,7 +621,7 @@ export default {
 
     async function removePhoto() {
       try {
-        const response = await fetch(`http://localhost:3000/api/persons/${route.params.id}/photo`, {
+        const response = await fetch(`${API_BASE_URL}/api/persons/${route.params.id}/photo`, {
           method: 'DELETE'
         })
 

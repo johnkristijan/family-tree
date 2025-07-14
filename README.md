@@ -111,6 +111,24 @@ cd backend
 yarn db:unseed
 ```
 
+## Deployment
+
+### Frontend
+_This is hosted on Firebase Hosting with DNS config setup for herrmann.no_
+cd frontend-v2
+yarn build
+firebase projects:list
+firebase use herrmann-family-tree
+firebase deploy --only hosting
+
+### Backend
+_This is hosted on Ubuntu VM with nginx reverse proxy to 127.0.0.1:3000 from backend.herrmann.no_
+ssh dellserver@<your-server-ip>
+cd family-tree/backend
+npm install
+npm start
+
+
 ## Next Steps / Future Development
 
 (This section can be expanded as the project grows)

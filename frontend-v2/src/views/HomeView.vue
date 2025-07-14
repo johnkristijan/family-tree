@@ -6,7 +6,7 @@
       <div class="text-center mb-16">
         <div class="text-6xl mb-6">🌳</div>
         <h1 class="text-6xl font-bold text-gray-900 mb-6 bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
-          Family Tree
+          Herrmann.no Family
         </h1>
         <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
           Discover, document, and celebrate your family's unique story. Build connections across generations and preserve your heritage for future generations.
