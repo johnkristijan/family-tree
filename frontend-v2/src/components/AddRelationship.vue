@@ -4,10 +4,15 @@
       <div class="mt-3">
         <!-- Header -->
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-xl font-semibold text-gray-900">
-            Add Relationship
-          </h2>
-          <button @click="closeModal" class="text-gray-400 hover:text-gray-600">
+          <div>
+            <h2 class="text-xl font-semibold text-gray-900">
+              Add Relationship
+            </h2>
+            <p class="text-sm text-gray-600 mt-1">
+              Adding relationship for: <span class="font-medium text-gray-900">{{ currentPersonName }}</span>
+            </p>
+          </div>
+          <button @click="closeModal" class="text-gray-400 hover:text-gray-600 cursor-pointer">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
@@ -32,7 +37,7 @@
                 :key="person.id" 
                 :value="person.id"
               >
-                {{ person.first_name }} {{ person.last_name }}
+                {{ person.first_name }} {{ person.last_name }}{{ person.birth_date ? ` (${person.birth_date})` : '' }}
               </option>
             </select>
           </div>
@@ -96,14 +101,14 @@
             <button 
               type="button" 
               @click="closeModal"
-              class="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+              class="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button 
               type="submit"
               :disabled="loading"
-              class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-400 transition-colors flex items-center"
+              class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-400 transition-colors flex items-center cursor-pointer"
             >
               <div v-if="loading" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
               Add Relationship
@@ -148,7 +153,18 @@ export default {
     })
 
     const availablePersons = computed(() => {
-      return persons.value.filter(person => person.id !== props.currentPersonId)
+      return persons.value
+        .filter(person => person.id !== props.currentPersonId)
+        .sort((a, b) => {
+          const nameA = `${a.first_name} ${a.last_name}`.toLowerCase()
+          const nameB = `${b.first_name} ${b.last_name}`.toLowerCase()
+          return nameA.localeCompare(nameB)
+        })
+    })
+
+    const currentPersonName = computed(() => {
+      const currentPerson = persons.value.find(person => person.id === props.currentPersonId)
+      return currentPerson ? `${currentPerson.first_name} ${currentPerson.last_name}` : ''
     })
 
     // Watch for modal open/close to reset form
@@ -206,6 +222,7 @@ export default {
       loading,
       error,
       availablePersons,
+      currentPersonName,
       closeModal,
       submitForm
     }

@@ -3,14 +3,57 @@ import express, { Request, Response } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import db from './config/database'; // Import the initialized DB connection
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.use(cors());
 app.use(express.json());
+
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, `person-${req.params.personId}-${uniqueSuffix}${path.extname(file.originalname)}`);
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|webp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  }
+});
+
+// Serve uploaded files statically
+app.use('/uploads', express.static(uploadsDir));
 
 // ===== AUTH ROUTES =====
 app.post('/api/login', (req: Request, res: Response) => {
@@ -45,7 +88,24 @@ app.post('/api/persons', (req: Request, res: Response): void => {
 
 // READ all persons
 app.get('/api/persons', (req: Request, res: Response) => {
-  const sql = "SELECT * FROM persons ORDER BY last_name, first_name";
+  const sql = `
+    SELECT 
+      p.*,
+      COALESCE(r.relationships_count, 0) as relationships_count
+    FROM persons p
+    LEFT JOIN (
+      SELECT 
+        person_id,
+        COUNT(*) as relationships_count
+      FROM (
+        SELECT person1_id as person_id FROM relationships
+        UNION ALL
+        SELECT person2_id as person_id FROM relationships
+      ) unified_relationships
+      GROUP BY person_id
+    ) r ON p.id = r.person_id
+    ORDER BY p.last_name, p.first_name
+  `;
   db.all(sql, [], (err, rows) => {
     if (err) {
       console.error('Error fetching persons:', err.message);
@@ -58,8 +118,25 @@ app.get('/api/persons', (req: Request, res: Response) => {
 // READ a single person by ID
 app.get('/api/persons/:id', (req: Request, res: Response) => {
   const { id } = req.params;
-  const sql = "SELECT * FROM persons WHERE id = ?";
-  db.get(sql, [id], (err, row) => {
+  const sql = `
+    SELECT 
+      p.*,
+      COALESCE(r.relationships_count, 0) as relationships_count
+    FROM persons p
+    LEFT JOIN (
+      SELECT 
+        person_id,
+        COUNT(*) as relationships_count
+      FROM (
+        SELECT person1_id as person_id FROM relationships WHERE person1_id = ?
+        UNION ALL
+        SELECT person2_id as person_id FROM relationships WHERE person2_id = ?
+      ) unified_relationships
+      GROUP BY person_id
+    ) r ON p.id = r.person_id
+    WHERE p.id = ?
+  `;
+  db.get(sql, [id, id, id], (err, row) => {
     if (err) {
       console.error('Error fetching person:', err.message);
       return res.status(500).json({ message: 'Failed to fetch person', error: err.message });
@@ -210,6 +287,97 @@ app.delete('/api/relationships/:relationshipId', (req: Request, res: Response) =
   });
 });
 
+
+// ===== PHOTO UPLOAD ROUTE =====
+
+// Upload photo for a person
+app.post('/api/persons/:personId/photo', upload.single('photo'), (req: Request, res: Response): void => {
+  const personId = parseInt(req.params.personId, 10);
+  
+  if (!req.file) {
+    res.status(400).json({ message: 'No file uploaded' });
+    return;
+  }
+
+  // Build the URL for the uploaded photo
+  const photoUrl = `/uploads/${req.file.filename}`;
+  
+  // Update the person's main_photo in the database (changed from profile_picture_url)
+  const sql = 'UPDATE persons SET main_photo = ? WHERE id = ?';
+  
+  db.run(sql, [photoUrl, personId], function(err) {
+    if (err) {
+      // Delete the uploaded file if database update fails
+      fs.unlink(req.file!.path, (unlinkErr) => {
+        if (unlinkErr) console.error('Error deleting file:', unlinkErr);
+      });
+      console.error('Error updating person photo:', err.message);
+      return res.status(500).json({ message: 'Failed to update person photo', error: err.message });
+    }
+    
+    if (this.changes === 0) {
+      // Delete the uploaded file if person not found
+      fs.unlink(req.file!.path, (unlinkErr) => {
+        if (unlinkErr) console.error('Error deleting file:', unlinkErr);
+      });
+      return res.status(404).json({ message: 'Person not found' });
+    }
+    
+    res.status(200).json({ 
+      message: 'Photo uploaded successfully', 
+      main_photo: photoUrl,  // Changed from profile_picture_url
+      personId: personId 
+    });
+  });
+});
+
+// Delete photo for a person
+app.delete('/api/persons/:personId/photo', (req: Request, res: Response): void => {
+  const personId = parseInt(req.params.personId, 10);
+  
+  // First, get the current photo URL
+  const selectSql = 'SELECT main_photo FROM persons WHERE id = ?';  // Changed from profile_picture_url
+  
+  db.get(selectSql, [personId], (err, row: any) => {
+    if (err) {
+      console.error('Error fetching person:', err.message);
+      return res.status(500).json({ message: 'Failed to fetch person', error: err.message });
+    }
+    
+    if (!row) {
+      return res.status(404).json({ message: 'Person not found' });
+    }
+    
+    const currentPhotoUrl = row.main_photo;  // Changed from profile_picture_url
+    
+    // Update the person's main_photo to null
+    const updateSql = 'UPDATE persons SET main_photo = NULL WHERE id = ?';  // Changed from profile_picture_url
+    
+    db.run(updateSql, [personId], function(updateErr) {
+      if (updateErr) {
+        console.error('Error removing person photo:', updateErr.message);
+        return res.status(500).json({ message: 'Failed to remove person photo', error: updateErr.message });
+      }
+      
+      // If there was a photo stored locally, delete it
+      if (currentPhotoUrl && currentPhotoUrl.startsWith('/uploads/')) {
+        const filename = currentPhotoUrl.replace('/uploads/', '');
+        const filepath = path.join(uploadsDir, filename);
+        
+        fs.unlink(filepath, (unlinkErr) => {
+          if (unlinkErr && unlinkErr.code !== 'ENOENT') {
+            console.error('Error deleting file:', unlinkErr);
+          }
+        });
+      }
+      
+      res.status(200).json({ 
+        message: 'Photo removed successfully', 
+        personId: personId 
+      });
+    });
+  });
+});
 
 // Root path
 app.get('/', (req: Request, res: Response) => {

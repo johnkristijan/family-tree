@@ -43,8 +43,18 @@
         <div class="bg-white rounded-lg shadow-lg overflow-hidden">
           <div class="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-8">
             <div class="flex items-center">
-              <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center text-2xl font-bold text-blue-600 mr-6">
-                {{ getInitials(person.first_name, person.last_name) }}
+              <!-- Profile Picture or Initials -->
+              <div class="relative">
+                <div v-if="person.main_photo" class="w-20 h-20 rounded-full overflow-hidden mr-6">
+                  <img 
+                    :src="getProfilePictureUrl(person.main_photo)" 
+                    :alt="`${person.first_name} ${person.last_name}`"
+                    class="w-full h-full object-cover"
+                  />
+                </div>
+                <div v-else class="w-20 h-20 bg-white rounded-full flex items-center justify-center text-2xl font-bold text-blue-600 mr-6">
+                  {{ getInitials(person.first_name, person.last_name) }}
+                </div>
               </div>
               <div>
                 <h1 class="text-3xl font-bold text-white">
@@ -143,18 +153,24 @@
                     Edit Details
                   </button>
                   
-                  <button class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center">
+                  <button 
+                    @click="$router.push(`/persons/${person.id}/family-tree`)"
+                    class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center"
+                  >
                     <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2V7m0 0V5a2 2 0 012-2h6l2 2h6a2 2 0 012 2v2M3 7h18M5 9h14" />
                     </svg>
-                    Manage Relationships
+                    View Family Tree
                   </button>
                   
-                  <button class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center">
+                  <button 
+                    @click="showPhotoUpload = true"
+                    class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center"
+                  >
                     <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    Add Photos
+                    {{ person.main_photo ? 'Change Photo' : 'Add Photo' }}
                   </button>
                 </div>
               </div>
@@ -214,12 +230,15 @@
               :key="relationship.id"
               class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
             >
-              <div class="flex items-center">
+              <router-link 
+                :to="`/persons/${getRelatedPersonId(relationship)}`"
+                class="flex items-center flex-1 cursor-pointer"
+              >
                 <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-semibold mr-3">
                   {{ getPersonInitials(relationship) }}
                 </div>
                 <div>
-                  <p class="font-medium text-gray-900">
+                  <p class="font-medium text-gray-900 hover:text-blue-600 transition-colors">
                     {{ getRelatedPersonName(relationship) }}
                   </p>
                   <p class="text-sm text-gray-600">
@@ -229,10 +248,10 @@
                     </span>
                   </p>
                 </div>
-              </div>
+              </router-link>
               <button 
                 @click="deleteRelationship(relationship.id)"
-                class="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-50 transition-colors"
+                class="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-50 transition-colors ml-2"
                 title="Delete relationship"
               >
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -262,11 +281,104 @@
       @close="showEditForm = false"
       @submit="handleEditPerson"
     />
+    
+    <!-- Photo Upload Modal -->
+    <div v-if="showPhotoUpload" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+          <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+            {{ person.main_photo ? 'Change Profile Photo' : 'Add Profile Photo' }}
+          </h3>
+          
+          <!-- Current Photo Preview -->
+          <div v-if="person.main_photo" class="mb-4">
+            <p class="text-sm text-gray-600 mb-2">Current photo:</p>
+            <div class="flex items-center justify-center">
+              <img 
+                :src="getProfilePictureUrl(person.main_photo)" 
+                alt="Current profile"
+                class="max-w-full h-32 rounded-lg object-cover"
+              />
+            </div>
+          </div>
+          
+          <!-- File Upload -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Select new photo
+            </label>
+            <input
+              type="file"
+              ref="fileInput"
+              @change="handleFileSelect"
+              accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+              class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
+            />
+            <p class="mt-1 text-xs text-gray-500">
+              Supported formats: JPEG, PNG, GIF, WebP (max 5MB)
+            </p>
+          </div>
+          
+          <!-- Preview of selected file -->
+          <div v-if="selectedFilePreview" class="mb-4">
+            <p class="text-sm text-gray-600 mb-2">Preview:</p>
+            <div class="flex items-center justify-center">
+              <img 
+                :src="selectedFilePreview" 
+                alt="Preview"
+                class="max-w-full h-32 rounded-lg object-cover"
+              />
+            </div>
+          </div>
+          
+          <!-- Upload Progress -->
+          <div v-if="uploadProgress > 0 && uploadProgress < 100" class="mb-4">
+            <div class="bg-gray-200 rounded-full h-2.5">
+              <div 
+                class="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                :style="`width: ${uploadProgress}%`"
+              ></div>
+            </div>
+            <p class="text-sm text-gray-600 mt-1">Uploading... {{ uploadProgress }}%</p>
+          </div>
+          
+          <!-- Actions -->
+          <div class="flex justify-between mt-6">
+            <div>
+              <button
+                v-if="person.main_photo"
+                @click="confirmRemovePhoto"
+                :disabled="uploading"
+                class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
+              >
+                Remove Photo
+              </button>
+            </div>
+            <div class="flex gap-2">
+              <button
+                @click="closePhotoModal"
+                :disabled="uploading"
+                class="px-4 py-2 bg-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                @click="uploadPhoto"
+                :disabled="!selectedFile || uploading"
+                class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              >
+                {{ uploading ? 'Uploading...' : 'Upload Photo' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useRelationshipsStore } from '../stores/relationships'
 import { usePersonsStore } from '../stores/persons'
@@ -289,6 +401,12 @@ export default {
     const error = ref(null)
     const showAddRelationship = ref(false)
     const showEditForm = ref(false)
+    const showPhotoUpload = ref(false)
+    const selectedFile = ref(null)
+    const selectedFilePreview = ref(null)
+    const uploading = ref(false)
+    const uploadProgress = ref(0)
+    const fileInput = ref(null)
     const { showSuccess, showError, showConfirm } = useToast()
     
     const relationshipsStore = useRelationshipsStore()
@@ -387,6 +505,15 @@ export default {
       }
     }
 
+    function getRelatedPersonId(relationship) {
+      const currentPersonId = parseInt(route.params.id)
+      if (relationship.person1_id === currentPersonId) {
+        return relationship.person2_id
+      } else {
+        return relationship.person1_id
+      }
+    }
+
     function getRelatedPersonName(relationship) {
       const currentPersonId = parseInt(route.params.id)
       if (relationship.person1_id === currentPersonId) {
@@ -409,9 +536,130 @@ export default {
       return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
     }
 
+    function getProfilePictureUrl(url) {
+      if (!url) return null
+      // If it's a relative URL (uploaded photo), prepend the API URL
+      if (url.startsWith('/uploads/')) {
+        return `http://localhost:3000${url}`
+      }
+      // Otherwise return as is (external URL)
+      return url
+    }
+
+    function handleFileSelect(event) {
+      const file = event.target.files[0]
+      if (!file) {
+        selectedFile.value = null
+        selectedFilePreview.value = null
+        return
+      }
+
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        showError('File size must be less than 5MB')
+        event.target.value = ''
+        return
+      }
+
+      selectedFile.value = file
+      
+      // Create preview
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        selectedFilePreview.value = e.target.result
+      }
+      reader.readAsDataURL(file)
+    }
+
+    async function uploadPhoto() {
+      if (!selectedFile.value) return
+
+      uploading.value = true
+      uploadProgress.value = 0
+
+      const formData = new FormData()
+      formData.append('photo', selectedFile.value)
+
+      try {
+        const response = await fetch(`http://localhost:3000/api/persons/${route.params.id}/photo`, {
+          method: 'POST',
+          body: formData,
+          // Track upload progress
+          onUploadProgress: (progressEvent) => {
+            uploadProgress.value = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+          }
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.message || 'Failed to upload photo')
+        }
+
+        const data = await response.json()
+        
+        // Update the person's main photo
+        person.value.main_photo = data.main_photo
+        
+        showSuccess('Photo uploaded successfully!')
+        closePhotoModal()
+      } catch (err) {
+        showError('Failed to upload photo: ' + err.message)
+      } finally {
+        uploading.value = false
+        uploadProgress.value = 0
+      }
+    }
+
+    async function confirmRemovePhoto() {
+      const isConfirmed = await showConfirm('Are you sure you want to remove the profile photo?')
+      if (isConfirmed) {
+        await removePhoto()
+      }
+    }
+
+    async function removePhoto() {
+      try {
+        const response = await fetch(`http://localhost:3000/api/persons/${route.params.id}/photo`, {
+          method: 'DELETE'
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.message || 'Failed to remove photo')
+        }
+
+        // Update the person's main photo
+        person.value.main_photo = null
+        
+        showSuccess('Photo removed successfully!')
+        closePhotoModal()
+      } catch (err) {
+        showError('Failed to remove photo: ' + err.message)
+      }
+    }
+
+    function closePhotoModal() {
+      showPhotoUpload.value = false
+      selectedFile.value = null
+      selectedFilePreview.value = null
+      if (fileInput.value) {
+        fileInput.value.value = ''
+      }
+    }
+
     onMounted(() => {
       fetchPerson()
     })
+
+    // Watch for route parameter changes to reload data when navigating between persons
+    watch(
+      () => route.params.id,
+      (newId, oldId) => {
+        if (newId !== oldId) {
+          fetchPerson()
+        }
+      }
+    )
 
     return {
       route,
@@ -422,15 +670,27 @@ export default {
       showEditForm,
       personRelationships,
       relationshipsLoading,
+      showPhotoUpload,
+      selectedFile,
+      selectedFilePreview,
+      uploading,
+      uploadProgress,
+      fileInput,
       formatDate,
       getInitials,
       getAgeString,
+      getRelatedPersonId,
       getRelatedPersonName,
       getPersonInitials,
       formatRelationshipType,
+      getProfilePictureUrl,
       handleAddRelationship,
       handleEditPerson,
-      deleteRelationship
+      deleteRelationship,
+      handleFileSelect,
+      uploadPhoto,
+      confirmRemovePhoto,
+      closePhotoModal
     }
   }
 }

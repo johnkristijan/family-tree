@@ -3,6 +3,7 @@ import HomeView from '../views/HomeView.vue'
 import AboutView from '../views/AboutView.vue'
 import PersonsView from '../views/PersonsView.vue'
 import PersonDetailView from '../views/PersonDetailView.vue'
+import FamilyTreeView from '../views/FamilyTreeView.vue'
 
 const routes = [
   {
@@ -24,6 +25,11 @@ const routes = [
     path: '/persons/:id',
     name: 'PersonDetail',
     component: PersonDetailView
+  },
+  {
+    path: '/persons/:id/family-tree',
+    name: 'FamilyTree',
+    component: FamilyTreeView
   }
 ]
 
