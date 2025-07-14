@@ -14,7 +14,10 @@ const port = process.env.PORT || 3000;
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
-app.use(cors());
+app.use(cors({
+  origin: ['https://herrmann.no', 'https://www.herrmann.no', 'http://localhost:5173'], // Adjust to your frontend URL
+  credentials: true
+}));
 app.use(express.json());
 
 // Create uploads directory if it doesn't exist
