@@ -2,8 +2,8 @@
   <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 
-      <!-- Back Button -->
-      <div class="mb-6">
+      <!-- Back Button + view-mode toggle -->
+      <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
         <router-link
           :to="`/persons/${route.params.id}`"
           class="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors"
@@ -13,6 +13,15 @@
           </svg>
           Back to Person Details
         </router-link>
+
+        <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-gray-200 bg-white text-sm text-gray-700 cursor-pointer hover:border-blue-400 hover:text-gray-900 transition-colors">
+          <input
+            type="checkbox"
+            v-model="stayInTreeView"
+            class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+          />
+          <span>Stay in family view <span class="text-gray-500">(click moves person to center)</span></span>
+        </label>
       </div>
 
       <!-- Loading State -->
@@ -312,7 +321,7 @@
 </template>
 
 <script>
-import { ref, onMounted, computed, reactive } from 'vue'
+import { ref, onMounted, computed, reactive, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useRelationshipsStore } from '../stores/relationships'
 import { usePersonsStore } from '../stores/persons'
@@ -338,6 +347,14 @@ export default {
     const { showSuccess, showError } = useToast()
 
     const addModal = reactive({ open: false, section: 'parent' })
+
+    // Click-to-recenter mode (persists across sessions)
+    const STAY_KEY = 'familytree.stayInTreeView'
+    const stayInTreeView = ref(false)
+    try { stayInTreeView.value = localStorage.getItem(STAY_KEY) === '1' } catch {}
+    watch(stayInTreeView, (v) => {
+      try { localStorage.setItem(STAY_KEY, v ? '1' : '0') } catch {}
+    })
 
     const currentPersonIdNum = computed(() => parseInt(route.params.id))
     const personFullName = computed(() => {
@@ -479,7 +496,11 @@ export default {
     }
 
     function navigateToPerson(personId) {
-      router.push(`/persons/${personId}`)
+      if (stayInTreeView.value) {
+        router.push(`/persons/${personId}/family-tree`)
+      } else {
+        router.push(`/persons/${personId}`)
+      }
     }
 
     function getProfilePictureUrl(url) {
@@ -496,6 +517,14 @@ export default {
       }
     })
 
+    // Re-fetch when navigating between persons within this view
+    // (Vue Router reuses the component when only the route param changes)
+    watch(() => route.params.id, (newId, oldId) => {
+      if (newId && newId !== oldId) {
+        fetchData()
+      }
+    })
+
     return {
       route,
       person,
@@ -508,6 +537,7 @@ export default {
       hasAnyRelatives,
       currentPersonIdNum,
       personFullName,
+      stayInTreeView,
       addModal,
       openAdd,
       closeAdd,
