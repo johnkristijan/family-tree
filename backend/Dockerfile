@@ -1,38 +1,33 @@
-# backend/Dockerfile
+# syntax=docker/dockerfile:1
 
-# Stage 1: Build
-FROM node:18-alpine AS builder
-
+FROM node:20-alpine AS builder
 WORKDIR /usr/src/app
 
-# Copy package files and install dependencies (including dev for build)
-COPY package*.json ./
-RUN npm install
+# Build tools needed if sqlite3 has to compile from source
+RUN apk add --no-cache python3 make g++
 
-# Copy the rest of the application code
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile
+
 COPY . .
+RUN yarn build
 
-# Build TypeScript
-RUN npm run build
-
-# Stage 2: Production
-# Prune dev dependencies for smaller image
-FROM node:18-alpine AS production
-ARG NODE_ENV=production
-ENV NODE_ENV=${NODE_ENV}
-
+FROM node:20-alpine AS prod-deps
 WORKDIR /usr/src/app
 
-COPY package*.json ./
-RUN npm install --omit=dev --ignore-scripts # Install only prod dependencies, ignore scripts like postinstall if any
+RUN apk add --no-cache python3 make g++
 
-# Copy built code from builder stage
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile --production \
+    && yarn cache clean
+
+FROM node:20-alpine AS runtime
+ENV NODE_ENV=production
+WORKDIR /usr/src/app
+
+COPY package.json ./
+COPY --from=prod-deps /usr/src/app/node_modules ./node_modules
 COPY --from=builder /usr/src/app/dist ./dist
-COPY --from=builder /usr/src/app/familytree.sqlite ./familytree.sqlite # Copy the DB file if it exists
 
-# Expose port
 EXPOSE 3000
-
-# Command to run the application
-# This refers to "serve": "node dist/server.js" in package.json
-CMD [ "npm", "run", "serve" ]
+CMD ["node", "dist/server.js"]

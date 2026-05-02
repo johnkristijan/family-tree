@@ -1,0 +1,36 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: family-tree-backend:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    volumes:
+      - /var/lib/family-tree/db/familytree.sqlite:/usr/src/app/familytree.sqlite
+      - /var/lib/family-tree/uploads:/usr/src/app/uploads
+    networks:
+      - family-tree
+
+  frontend:
+    build:
+      context: ./frontend-v2
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: https://herrmann.no
+    image: family-tree-frontend:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      - backend
+    networks:
+      - family-tree
+
+networks:
+  family-tree:
+    driver: bridge
