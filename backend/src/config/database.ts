@@ -25,12 +25,14 @@ const initializeDatabase = () => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         first_name TEXT NOT NULL,
         last_name TEXT,
-        middle_name TEXT,
+        maiden_name TEXT, -- Last name at birth
         birth_date TEXT, -- Store dates as TEXT in ISO8601 format (YYYY-MM-DD)
         death_date TEXT,
         gender TEXT,
         bio TEXT,
-        profile_picture_url TEXT,
+        profession TEXT,
+        main_photo TEXT,
+        location TEXT,
         created_at TEXT DEFAULT (STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW')),
         updated_at TEXT DEFAULT (STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))
       )
