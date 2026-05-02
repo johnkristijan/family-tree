@@ -52,6 +52,12 @@ ssh "${SSH_OPTS[@]}" "${REMOTE}" bash <<EOF
   fi
 EOF
 
+step "Sync uploads (--ignore-existing: seeds first deploy, never overwrites)"
+rsync -az --ignore-existing \
+  -e "${RSYNC_SSH}" \
+  "${LOCAL_DIR}/backend/uploads/" "${REMOTE}:${DATA_DIR}/uploads/"
+ssh "${SSH_OPTS[@]}" "${REMOTE}" "chown -R 1000:1000 ${DATA_DIR}/uploads"
+
 step "Build and start containers"
 ssh "${SSH_OPTS[@]}" "${REMOTE}" bash <<EOF
   set -euo pipefail
