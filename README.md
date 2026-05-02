@@ -1,142 +1,142 @@
-# Herrmann Family Tree Application
+# Herrmann Family Tree
 
-This project is a web application for managing the Herrmann family tree. It features a Vue 3 frontend with PrimeVue for the UI, and a Node.js/Express backend with an SQLite database.
+A small web app for managing the Herrmann family tree — Vue 3 SPA on the front, Node.js/Express + SQLite on the back. Live at **https://herrmann.no**.
 
-## Project Structure
+## Project structure
 
--   `/frontend`: Contains the Vue 3 single-page application.
--   `/backend`: Contains the Node.js (Express) API server and database logic.
--   `/familytree.sqlite`: The SQLite database file (created in the `backend` directory when the backend server starts).
+```
+backend/             Node.js + Express + TypeScript + SQLite (sqlite3)
+frontend-v2/         Vue 3 + Vite + Tailwind v4 + Pinia + Vue Router
+deploy/              Server bootstrap script + nginx site config
+deploy_prod.sh       One-shot deployment to production
+docker-compose.yml         Local Docker setup (optional)
+docker-compose.prod.yml    Production Docker setup (used by deploy_prod.sh)
+```
 
-## Local Setup and Development (macOS)
+The persistent data lives **on the server**, never in the repo:
 
-Follow these instructions to get the application running on your local machine for development and testing.
+- `/var/lib/family-tree/db/familytree.sqlite` — live database
+- `/var/lib/family-tree/uploads/` — user-uploaded photos
+
+## Local development (macOS)
 
 ### Prerequisites
 
-1.  **Node.js and yarn**:
-    *   Ensure you have Node.js and yarn installed. LTS version of Node.js is recommended.
-    *   You can download Node.js from [nodejs.org](https://nodejs.org/) or install it using Homebrew:
-        ```bash
-        brew install node
-        ```
-    *   Install yarn using npm (if you have it) or Homebrew:
-        ```bash
-        npm install --global yarn
-        # OR
-        brew install yarn
-        ```
-    *   Verify installation:
-        ```bash
-        node -v
-        yarn --version
-        ```
-
-2.  **Git**:
-    *   Ensure Git is installed. macOS usually comes with Git. If not, install via Homebrew:
-        ```bash
-        brew install git
-        ```
-
-### 1. Clone the Repository
-
 ```bash
-git clone <repository_url> # Replace <repository_url> with the actual URL
-cd <repository_directory_name>
+brew install node yarn git
+node -v && yarn --version
 ```
 
-### 2. Setup and Run Backend Server
-
-The backend server handles API requests and database interactions.
+### 1. Backend (port 3000)
 
 ```bash
-# Navigate to the backend directory
 cd backend
-
-# Install dependencies
 yarn install
-
-# (Optional) Build TypeScript (if you prefer running compiled JS, or for specific scripts)
-# The dev server (yarn start) uses ts-node, so this isn't strictly needed for 'start'.
-# npm run build
-
-# Start the development server (usually on http://localhost:3000)
-yarn start
+yarn start          # ts-node, no build step needed
 ```
-The backend server will connect to/create the `familytree.sqlite` database file in the `backend` directory. You should see log messages indicating the server is running and the database is connected/initialized.
 
-### 3. Setup and Run Frontend Application
+On first run this creates `backend/familytree.sqlite` and initializes the schema.
 
-The frontend application provides the user interface.
+### 2. Frontend (port 5173)
 
 ```bash
-# Navigate to the frontend directory (from the project root)
-cd frontend
-
-# Install dependencies
+cd frontend-v2
 yarn install
-
-# Start the Vite development server (usually on http://localhost:5173 or another port)
 yarn dev
 ```
-Vite will output the local URL where the frontend is being served. Open this URL in your web browser.
 
-### 4. Login
+Open the URL Vite prints (default `http://localhost:5173`).
 
-*   The application uses a simple password-only login for initial access.
-*   **Password**: `starcraft`
+### 3. Login
 
-### 5. Database Seeding (Populating with Test Data)
+Password: `starcraft`
 
-To populate the database with some initial sample data:
+### 4. Seed / unseed test data
 
 ```bash
-# Make sure you are in the backend directory
 cd backend
-
-# Run the seed script
-yarn db:seed
-```
-This will add a few sample individuals to the `persons` table.
-
-### 6. Database Unseeding (Clearing Test Data)
-
-To clear all data from the `persons` and `relationships` tables (and reset auto-increment counters):
-
-```bash
-# Make sure you are in the backend directory
-cd backend
-
-# Run the unseed script
-yarn db:unseed
+yarn db:seed        # populate sample persons
+yarn db:unseed      # wipe persons + relationships, reset autoincrement
 ```
 
 ## Deployment
 
-### Frontend
-_This is hosted on Firebase Hosting with DNS config setup for herrmann.no_
-cd frontend-v2
-yarn build
-firebase projects:list
-firebase use herrmann-family-tree
-firebase deploy
+Production runs on an Ubuntu 24.04 VM behind nginx with a Let's Encrypt cert for `herrmann.no`. Both services run as Docker containers bound to `127.0.0.1`; the host nginx is the only thing reachable from the internet.
 
-### Backend
-_This is hosted on Ubuntu VM with nginx reverse proxy to 127.0.0.1:3000 from backend.herrmann.no_
-ssh dellserver@<your-server-ip>
-cd family-tree/backend
-git pull
-sudo systemctl daemon-reload
-sudo systemctl restart family-tree-backend
-sudo journalctl -u herrmann-backend.service -f
+```
+Internet ──443──▶ host nginx (TLS) ──┬──▶ 127.0.0.1:8080  frontend container (nginx + dist)
+                                     └──▶ 127.0.0.1:3000  backend container  (Express + sqlite3)
+                                                          └─ bind mounts
+                                                             /var/lib/family-tree/db
+                                                             /var/lib/family-tree/uploads
+```
 
+`restart: unless-stopped` on the containers + `systemctl enable docker` covers reboots — no separate systemd unit needed.
 
-## Next Steps / Future Development
+### First-time server setup (run once)
 
-(This section can be expanded as the project grows)
+On a fresh Ubuntu host with nginx + a Let's Encrypt cert already provisioned for `herrmann.no`:
 
-*   Implement relationship management between persons.
-*   Add more detailed views for individuals.
-*   Visualize the family tree.
-*   User account management (beyond the single password).
-*   Deployment configuration.
+```bash
+# from your local machine, in this repo
+rsync -az --exclude=.git --exclude=node_modules --exclude=dist \
+  ./ root@<your-server>:/opt/family-tree/
+
+ssh root@<your-server> 'bash /opt/family-tree/deploy/install_server.sh'
+```
+
+`install_server.sh` is idempotent. It:
+
+1. Installs Docker Engine + Compose plugin from Docker's official APT repo.
+2. Enables `docker.service` to start on boot.
+3. Creates `/var/lib/family-tree/{db,uploads}` owned by uid 1000 (the container's `node` user).
+4. Drops `deploy/nginx-herrmann.no.conf` into `/etc/nginx/sites-available/`, symlinks it into `sites-enabled/`, runs `nginx -t`, and reloads.
+
+### Routine deploys
+
+```bash
+./deploy_prod.sh
+```
+
+What it does:
+
+1. Sanity-checks ssh + remote `docker compose`.
+2. `rsync` the repo to `/opt/family-tree/` (excludes `.git`, `node_modules`, `dist`, `backend/uploads/`, `*.sqlite-journal`, `docs/`).
+3. **First deploy only:** seeds `/var/lib/family-tree/db/familytree.sqlite` from `backend/familytree.sqlite` in the repo. Subsequent deploys never touch the live DB.
+4. `docker compose -f docker-compose.prod.yml up -d --build`, then `docker image prune -f`.
+5. Smoke-tests `https://herrmann.no/api/persons` and `https://herrmann.no/`. Exits non-zero if either isn't 200.
+
+Override defaults via env vars:
+
+```bash
+REMOTE_HOST=other.example.com REMOTE_USER=ubuntu ./deploy_prod.sh
+```
+
+### Operations cheatsheet
+
+```bash
+# Tail container logs
+ssh root@<your-server> 'cd /opt/family-tree && docker compose -f docker-compose.prod.yml logs -f'
+
+# Restart just one service
+ssh root@<your-server> 'cd /opt/family-tree && docker compose -f docker-compose.prod.yml restart backend'
+
+# Snapshot the live DB
+ssh root@<your-server> 'sqlite3 /var/lib/family-tree/db/familytree.sqlite .dump' > backup.sql
+
+# Pull the live DB to local for inspection
+scp root@<your-server>:/var/lib/family-tree/db/familytree.sqlite ./backend/familytree.sqlite
+```
+
+## Database schema
+
+**`persons`** — `id`, `first_name`, `last_name`, `middle_name`, `birth_date`, `death_date`, `gender`, `bio`, `profession`, `main_photo`, `location`, timestamps.
+
+**`relationships`** — `id`, `person1_id`, `person2_id`, `relationship_type` (e.g. `parent_of`, `married_to`), `start_date`, `end_date`, timestamps.
+
+## Future work
+
+- Visualize the tree graphically (currently a list/detail view)
+- Real auth (move beyond the shared password)
+- Per-user accounts and audit trail
+- Automated DB backups to off-server storage
