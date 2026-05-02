@@ -1,10 +1,10 @@
 <template>
   <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-      
+
       <!-- Back Button -->
       <div class="mb-6">
-        <router-link 
+        <router-link
           :to="`/persons/${route.params.id}`"
           class="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors"
         >
@@ -38,36 +38,36 @@
 
       <!-- Family Tree -->
       <div v-else-if="person" class="space-y-8">
-        
+
         <!-- Header -->
         <div class="text-center mb-8">
           <h1 class="text-3xl font-bold text-gray-900 mb-2">
             {{ person.first_name }} {{ person.last_name }}'s Family Tree
           </h1>
-          <p class="text-gray-600">Immediate family relationships</p>
+          <p class="text-gray-600">Click + to link an existing person or quick-add a new one</p>
         </div>
 
         <!-- Family Tree Chart -->
         <div class="bg-white rounded-lg shadow-lg p-8 overflow-x-auto">
           <div class="family-tree-container">
-            
+
             <!-- Parents Row -->
-            <div class="tree-row parents-row" v-if="parents.length > 0">
+            <div class="tree-row parents-row">
               <div class="tree-level">
                 <div class="tree-generation-label">
                   <span class="text-sm font-medium text-gray-500">Parents</span>
                 </div>
                 <div class="tree-members parents-container">
-                  <div 
-                    v-for="parent in parents" 
+                  <div
+                    v-for="parent in parents"
                     :key="parent.id"
                     class="tree-member parent-member"
                     @click="navigateToPerson(parent.id)"
                   >
                     <div class="member-card">
                       <div v-if="parent.main_photo" class="member-avatar member-avatar-image">
-                        <img 
-                          :src="getProfilePictureUrl(parent.main_photo)" 
+                        <img
+                          :src="getProfilePictureUrl(parent.main_photo)"
                           :alt="`${parent.first_name} ${parent.last_name}`"
                           class="avatar-image"
                         />
@@ -82,6 +82,17 @@
                       </div>
                     </div>
                   </div>
+                  <button type="button" class="tree-member add-member parent-add" @click="openAdd('parent')" :aria-label="parents.length ? 'Add another parent' : 'Add parent'">
+                    <div class="member-card add-card">
+                      <div class="member-avatar add-avatar">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                      </div>
+                      <div class="member-info">
+                        <h3 class="member-name add-label">{{ parents.length ? 'Add another parent' : 'Add parent' }}</h3>
+                        <p class="member-details add-sub">Link existing or create new</p>
+                      </div>
+                    </div>
+                  </button>
                 </div>
               </div>
             </div>
@@ -96,8 +107,8 @@
                   <div class="tree-member current-person">
                     <div class="member-card current-person-card">
                       <div v-if="person.main_photo" class="member-avatar current-person-avatar member-avatar-image">
-                        <img 
-                          :src="getProfilePictureUrl(person.main_photo)" 
+                        <img
+                          :src="getProfilePictureUrl(person.main_photo)"
                           :alt="`${person.first_name} ${person.last_name}`"
                           class="avatar-image"
                         />
@@ -117,22 +128,22 @@
             </div>
 
             <!-- Siblings Row -->
-            <div class="tree-row siblings-row" v-if="siblings.length > 0">
+            <div class="tree-row siblings-row">
               <div class="tree-level">
                 <div class="tree-generation-label">
                   <span class="text-sm font-medium text-gray-500">Siblings</span>
                 </div>
                 <div class="tree-members siblings-container">
-                  <div 
-                    v-for="sibling in siblings" 
+                  <div
+                    v-for="sibling in siblings"
                     :key="sibling.id"
                     class="tree-member sibling-member"
                     @click="navigateToPerson(sibling.id)"
                   >
                     <div class="member-card">
                       <div v-if="sibling.main_photo" class="member-avatar member-avatar-image">
-                        <img 
-                          :src="getProfilePictureUrl(sibling.main_photo)" 
+                        <img
+                          :src="getProfilePictureUrl(sibling.main_photo)"
                           :alt="`${sibling.first_name} ${sibling.last_name}`"
                           class="avatar-image"
                         />
@@ -147,27 +158,38 @@
                       </div>
                     </div>
                   </div>
+                  <button type="button" class="tree-member add-member sibling-add" @click="openAdd('sibling')" :aria-label="siblings.length ? 'Add another sibling' : 'Add sibling'">
+                    <div class="member-card add-card">
+                      <div class="member-avatar add-avatar">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                      </div>
+                      <div class="member-info">
+                        <h3 class="member-name add-label">{{ siblings.length ? 'Add another sibling' : 'Add sibling' }}</h3>
+                        <p class="member-details add-sub">Link existing or create new</p>
+                      </div>
+                    </div>
+                  </button>
                 </div>
               </div>
             </div>
 
             <!-- Children Row -->
-            <div class="tree-row children-row" v-if="children.length > 0">
+            <div class="tree-row children-row">
               <div class="tree-level">
                 <div class="tree-generation-label">
                   <span class="text-sm font-medium text-gray-500">Children</span>
                 </div>
                 <div class="tree-members children-container">
-                  <div 
-                    v-for="child in children" 
+                  <div
+                    v-for="child in children"
                     :key="child.id"
                     class="tree-member child-member"
                     @click="navigateToPerson(child.id)"
                   >
                     <div class="member-card">
                       <div v-if="child.main_photo" class="member-avatar member-avatar-image">
-                        <img 
-                          :src="getProfilePictureUrl(child.main_photo)" 
+                        <img
+                          :src="getProfilePictureUrl(child.main_photo)"
                           :alt="`${child.first_name} ${child.last_name}`"
                           class="avatar-image"
                         />
@@ -182,27 +204,38 @@
                       </div>
                     </div>
                   </div>
+                  <button type="button" class="tree-member add-member child-add" @click="openAdd('child')" :aria-label="children.length ? 'Add another child' : 'Add child'">
+                    <div class="member-card add-card">
+                      <div class="member-avatar add-avatar">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                      </div>
+                      <div class="member-info">
+                        <h3 class="member-name add-label">{{ children.length ? 'Add another child' : 'Add child' }}</h3>
+                        <p class="member-details add-sub">Link existing or create new</p>
+                      </div>
+                    </div>
+                  </button>
                 </div>
               </div>
             </div>
 
             <!-- Spouse Row -->
-            <div class="tree-row spouse-row" v-if="spouses.length > 0">
+            <div class="tree-row spouse-row">
               <div class="tree-level">
                 <div class="tree-generation-label">
                   <span class="text-sm font-medium text-gray-500">Spouse(s)</span>
                 </div>
                 <div class="tree-members spouse-container">
-                  <div 
-                    v-for="spouse in spouses" 
+                  <div
+                    v-for="spouse in spouses"
                     :key="spouse.id"
                     class="tree-member spouse-member"
                     @click="navigateToPerson(spouse.id)"
                   >
                     <div class="member-card">
                       <div v-if="spouse.main_photo" class="member-avatar member-avatar-image">
-                        <img 
-                          :src="getProfilePictureUrl(spouse.main_photo)" 
+                        <img
+                          :src="getProfilePictureUrl(spouse.main_photo)"
                           :alt="`${spouse.first_name} ${spouse.last_name}`"
                           class="avatar-image"
                         />
@@ -217,17 +250,19 @@
                       </div>
                     </div>
                   </div>
+                  <button type="button" class="tree-member add-member spouse-add" @click="openAdd('spouse')" :aria-label="spouses.length ? 'Add another spouse' : 'Add spouse'">
+                    <div class="member-card add-card">
+                      <div class="member-avatar add-avatar">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                      </div>
+                      <div class="member-info">
+                        <h3 class="member-name add-label">{{ spouses.length ? 'Add another spouse' : 'Add spouse' }}</h3>
+                        <p class="member-details add-sub">Link existing or create new</p>
+                      </div>
+                    </div>
+                  </button>
                 </div>
               </div>
-            </div>
-
-            <!-- Empty State -->
-            <div v-if="!hasAnyRelatives" class="text-center py-12">
-              <svg class="h-16 w-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              <h3 class="text-lg font-medium text-gray-900 mb-2">No immediate family relationships found</h3>
-              <p class="text-gray-500">Add relationships to see the family tree</p>
             </div>
 
           </div>
@@ -236,7 +271,7 @@
         <!-- Legend -->
         <div class="bg-white rounded-lg shadow p-6">
           <h3 class="text-lg font-medium text-gray-900 mb-4">Legend</h3>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div class="flex items-center">
               <div class="w-4 h-4 bg-blue-500 rounded-full mr-2"></div>
               <span class="text-sm text-gray-600">Current Person</span>
@@ -253,25 +288,43 @@
               <div class="w-4 h-4 bg-purple-500 rounded-full mr-2"></div>
               <span class="text-sm text-gray-600">Children</span>
             </div>
+            <div class="flex items-center">
+              <div class="w-4 h-4 bg-red-500 rounded-full mr-2"></div>
+              <span class="text-sm text-gray-600">Spouse</span>
+            </div>
           </div>
         </div>
 
       </div>
-
     </div>
+
+    <!-- Quick-add modal -->
+    <QuickAddRelation
+      :is-open="addModal.open"
+      :current-person-id="currentPersonIdNum"
+      :current-person-name="personFullName"
+      :section="addModal.section"
+      :exclude-person-ids="excludeForSection(addModal.section)"
+      @close="closeAdd"
+      @created="onCreated"
+    />
   </div>
 </template>
 
 <script>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useRelationshipsStore } from '../stores/relationships'
+import { usePersonsStore } from '../stores/persons'
 import apiService from '../services/api'
+import { useToast } from '../composables/useToast'
+import QuickAddRelation from '../components/QuickAddRelation.vue'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
 
 export default {
   name: 'FamilyTreeView',
+  components: { QuickAddRelation },
   setup() {
     const route = useRoute()
     const router = useRouter()
@@ -279,65 +332,63 @@ export default {
     const loading = ref(true)
     const error = ref(null)
     const relationships = ref([])
-    
+
     const relationshipsStore = useRelationshipsStore()
+    const personsStore = usePersonsStore()
+    const { showSuccess, showError } = useToast()
+
+    const addModal = reactive({ open: false, section: 'parent' })
+
+    const currentPersonIdNum = computed(() => parseInt(route.params.id))
+    const personFullName = computed(() => {
+      if (!person.value) return ''
+      return `${person.value.first_name} ${person.value.last_name || ''}`.trim()
+    })
 
     // Computed properties to categorize relationships
     const parents = computed(() => {
-      return relationships.value.filter(rel => 
+      return relationships.value.filter(rel =>
         rel.relationship_type === 'parent_of' || rel.relationship_type === 'child_of'
       ).filter(rel => {
-        const currentPersonId = parseInt(route.params.id)
-        // If relationship_type is 'parent_of', the current person is the child
-        if (rel.relationship_type === 'parent_of' && rel.person2_id === currentPersonId) {
-          return true
-        }
-        // If relationship_type is 'child_of', the current person is the child
-        if (rel.relationship_type === 'child_of' && rel.person1_id === currentPersonId) {
-          return true
-        }
+        const currentPersonId = currentPersonIdNum.value
+        if (rel.relationship_type === 'parent_of' && rel.person2_id === currentPersonId) return true
+        if (rel.relationship_type === 'child_of' && rel.person1_id === currentPersonId) return true
         return false
       }).map(rel => mapRelationshipToPerson(rel, 'parent'))
     })
 
     const children = computed(() => {
-      return relationships.value.filter(rel => 
+      return relationships.value.filter(rel =>
         rel.relationship_type === 'parent_of' || rel.relationship_type === 'child_of'
       ).filter(rel => {
-        const currentPersonId = parseInt(route.params.id)
-        // If relationship_type is 'parent_of', the current person is the parent
-        if (rel.relationship_type === 'parent_of' && rel.person1_id === currentPersonId) {
-          return true
-        }
-        // If relationship_type is 'child_of', the current person is the parent
-        if (rel.relationship_type === 'child_of' && rel.person2_id === currentPersonId) {
-          return true
-        }
+        const currentPersonId = currentPersonIdNum.value
+        if (rel.relationship_type === 'parent_of' && rel.person1_id === currentPersonId) return true
+        if (rel.relationship_type === 'child_of' && rel.person2_id === currentPersonId) return true
         return false
       }).map(rel => mapRelationshipToPerson(rel, 'child'))
     })
 
     const siblings = computed(() => {
-      return relationships.value.filter(rel => 
+      return relationships.value.filter(rel =>
         rel.relationship_type === 'sibling_of'
       ).map(rel => mapRelationshipToPerson(rel, 'sibling'))
     })
 
     const spouses = computed(() => {
-      return relationships.value.filter(rel => 
+      return relationships.value.filter(rel =>
         rel.relationship_type === 'spouse_of'
       ).map(rel => mapRelationshipToPerson(rel, 'spouse'))
     })
 
     const hasAnyRelatives = computed(() => {
-      return parents.value.length > 0 || children.value.length > 0 || 
+      return parents.value.length > 0 || children.value.length > 0 ||
              siblings.value.length > 0 || spouses.value.length > 0
     })
 
     function mapRelationshipToPerson(relationship, type) {
-      const currentPersonId = parseInt(route.params.id)
+      const currentPersonId = currentPersonIdNum.value
       const isCurrentPersonFirst = relationship.person1_id === currentPersonId
-      
+
       return {
         id: isCurrentPersonFirst ? relationship.person2_id : relationship.person1_id,
         first_name: isCurrentPersonFirst ? relationship.person2_first_name : relationship.person1_first_name,
@@ -351,17 +402,24 @@ export default {
       }
     }
 
+    function excludeForSection(section) {
+      switch (section) {
+        case 'parent': return parents.value.map(p => p.id)
+        case 'sibling': return siblings.value.map(p => p.id)
+        case 'child': return children.value.map(p => p.id)
+        case 'spouse': return spouses.value.map(p => p.id)
+        default: return []
+      }
+    }
+
     async function fetchData() {
       const personId = route.params.id
       loading.value = true
       error.value = null
 
       try {
-        // Fetch person details
         const personData = await apiService.getPerson(personId)
         person.value = personData
-
-        // Fetch relationships
         const relationshipsData = await relationshipsStore.fetchPersonRelationships(parseInt(personId))
         relationships.value = relationshipsData
       } catch (err) {
@@ -369,6 +427,34 @@ export default {
         console.error('Failed to fetch family tree data:', err)
       } finally {
         loading.value = false
+      }
+    }
+
+    async function refreshRelationships() {
+      try {
+        const data = await relationshipsStore.fetchPersonRelationships(currentPersonIdNum.value)
+        relationships.value = data
+      } catch (err) {
+        console.error('Failed to refresh relationships:', err)
+      }
+    }
+
+    function openAdd(section) {
+      addModal.section = section
+      addModal.open = true
+    }
+
+    function closeAdd() {
+      addModal.open = false
+    }
+
+    async function onCreated(payload) {
+      await refreshRelationships()
+      const sectionLabel = { parent: 'parent', sibling: 'sibling', child: 'child', spouse: 'spouse' }[addModal.section]
+      if (payload.mode === 'new' && payload.person) {
+        showSuccess(`Added ${payload.person.first_name} as ${sectionLabel}`)
+      } else {
+        showSuccess(`Linked as ${sectionLabel}`)
       }
     }
 
@@ -380,25 +466,15 @@ export default {
 
     function getAgeString(birthDate, deathDate) {
       if (!birthDate) return 'Age unknown'
-      
       const birth = new Date(birthDate)
       const end = deathDate ? new Date(deathDate) : new Date()
       const age = Math.floor((end - birth) / (365.25 * 24 * 60 * 60 * 1000))
-      
-      if (deathDate) {
-        return `${age} years (${birth.getFullYear()} - ${end.getFullYear()})`
-      } else {
-        return `${age} years old`
-      }
+      if (deathDate) return `${age} years (${birth.getFullYear()} - ${end.getFullYear()})`
+      return `${age} years old`
     }
 
     function formatRelationshipType(type) {
-      const typeMap = {
-        'parent': 'Parent',
-        'child': 'Child',
-        'sibling': 'Sibling',
-        'spouse': 'Spouse'
-      }
+      const typeMap = { parent: 'Parent', child: 'Child', sibling: 'Sibling', spouse: 'Spouse' }
       return typeMap[type] || type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
     }
 
@@ -408,17 +484,16 @@ export default {
 
     function getProfilePictureUrl(url) {
       if (!url) return null
-      
-      // If it's a relative URL (uploaded photo), prepend the API URL
-      if (url.startsWith('/uploads/')) {
-        return `${API_BASE_URL}${url}`
-      }
-      // Otherwise return as is (external URL)
+      if (url.startsWith('/uploads/')) return `${API_BASE_URL}${url}`
       return url
     }
 
     onMounted(() => {
       fetchData()
+      // Pre-load full persons list so the search-as-you-type is instant
+      if (personsStore.persons.length === 0) {
+        personsStore.fetchPersons()
+      }
     })
 
     return {
@@ -431,6 +506,13 @@ export default {
       siblings,
       spouses,
       hasAnyRelatives,
+      currentPersonIdNum,
+      personFullName,
+      addModal,
+      openAdd,
+      closeAdd,
+      onCreated,
+      excludeForSection,
       getInitials,
       getAgeString,
       formatRelationshipType,
@@ -475,7 +557,7 @@ export default {
   flex-wrap: wrap;
   gap: 1.5rem;
   justify-content: center;
-  align-items: center;
+  align-items: stretch;
 }
 
 .tree-member {
@@ -495,6 +577,7 @@ export default {
   border: 2px solid #e5e7eb;
   text-align: center;
   min-width: 200px;
+  height: 100%;
   transition: all 0.2s ease-in-out;
 }
 
@@ -508,37 +591,14 @@ export default {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
 }
 
-.parent-member .member-card {
-  border-color: #10b981;
-}
-
-.parent-member .member-card:hover {
-  border-color: #059669;
-}
-
-.sibling-member .member-card {
-  border-color: #f59e0b;
-}
-
-.sibling-member .member-card:hover {
-  border-color: #d97706;
-}
-
-.child-member .member-card {
-  border-color: #8b5cf6;
-}
-
-.child-member .member-card:hover {
-  border-color: #7c3aed;
-}
-
-.spouse-member .member-card {
-  border-color: #ef4444;
-}
-
-.spouse-member .member-card:hover {
-  border-color: #dc2626;
-}
+.parent-member .member-card { border-color: #10b981; }
+.parent-member .member-card:hover { border-color: #059669; }
+.sibling-member .member-card { border-color: #f59e0b; }
+.sibling-member .member-card:hover { border-color: #d97706; }
+.child-member .member-card { border-color: #8b5cf6; }
+.child-member .member-card:hover { border-color: #7c3aed; }
+.spouse-member .member-card { border-color: #ef4444; }
+.spouse-member .member-card:hover { border-color: #dc2626; }
 
 .member-avatar {
   width: 4rem;
@@ -555,109 +615,87 @@ export default {
   border: 3px solid #e5e7eb;
 }
 
-.current-person-avatar {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  color: white;
-  border-color: #3b82f6;
+.current-person-avatar { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; border-color: #3b82f6; }
+.parent-member .member-avatar { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border-color: #10b981; }
+.sibling-member .member-avatar { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border-color: #f59e0b; }
+.child-member .member-avatar { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; border-color: #8b5cf6; }
+.spouse-member .member-avatar { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border-color: #ef4444; }
+
+.member-info { display: flex; flex-direction: column; gap: 0.25rem; }
+.member-name { font-weight: 600; color: #1f2937; font-size: 1.125rem; }
+.member-details { color: #6b7280; font-size: 0.875rem; }
+.member-age { color: #9ca3af; font-size: 0.875rem; }
+
+.member-avatar-image { overflow: hidden; padding: 0; }
+.avatar-image { width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.current-person-avatar.member-avatar-image { border-color: #3b82f6; }
+.parent-member .member-avatar-image { border-color: #10b981; }
+.sibling-member .member-avatar-image { border-color: #f59e0b; }
+.child-member .member-avatar-image { border-color: #8b5cf6; }
+.spouse-member .member-avatar-image { border-color: #ef4444; }
+
+/* Add (+) action card */
+.add-member {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  display: block;
 }
 
-.parent-member .member-avatar {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  border-color: #10b981;
-}
-
-.sibling-member .member-avatar {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  color: white;
-  border-color: #f59e0b;
-}
-
-.child-member .member-avatar {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-  color: white;
-  border-color: #8b5cf6;
-}
-
-.spouse-member .member-avatar {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  color: white;
-  border-color: #ef4444;
-}
-
-.member-info {
+.add-card {
+  border-style: dashed;
+  border-width: 2px;
+  background: #fafafa;
+  box-shadow: none;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  justify-content: center;
 }
 
-.member-name {
-  font-weight: 600;
-  color: #1f2937;
-  font-size: 1.125rem;
+.add-card:hover {
+  background: white;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
 }
 
-.member-details {
-  color: #6b7280;
-  font-size: 0.875rem;
+.add-avatar {
+  background: white !important;
+  border-style: dashed !important;
+  color: inherit !important;
 }
 
-.member-age {
+.add-label {
+  color: #4b5563;
+  font-size: 1rem;
+}
+
+.add-sub {
   color: #9ca3af;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
 }
 
-.member-avatar-image {
-  overflow: hidden;
-  padding: 0;
-}
+.parent-add .add-card { border-color: #10b981; }
+.parent-add .add-card:hover { border-color: #059669; background: #f0fdf4; }
+.parent-add .add-avatar { color: #10b981 !important; border-color: #10b981 !important; }
 
-.avatar-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-}
+.sibling-add .add-card { border-color: #f59e0b; }
+.sibling-add .add-card:hover { border-color: #d97706; background: #fffbeb; }
+.sibling-add .add-avatar { color: #f59e0b !important; border-color: #f59e0b !important; }
 
-.current-person-avatar.member-avatar-image {
-  border-color: #3b82f6;
-}
+.child-add .add-card { border-color: #8b5cf6; }
+.child-add .add-card:hover { border-color: #7c3aed; background: #f5f3ff; }
+.child-add .add-avatar { color: #8b5cf6 !important; border-color: #8b5cf6 !important; }
 
-.parent-member .member-avatar-image {
-  border-color: #10b981;
-}
-
-.sibling-member .member-avatar-image {
-  border-color: #f59e0b;
-}
-
-.child-member .member-avatar-image {
-  border-color: #8b5cf6;
-}
-
-.spouse-member .member-avatar-image {
-  border-color: #ef4444;
-}
+.spouse-add .add-card { border-color: #ef4444; }
+.spouse-add .add-card:hover { border-color: #dc2626; background: #fef2f2; }
+.spouse-add .add-avatar { color: #ef4444 !important; border-color: #ef4444 !important; }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .family-tree-container {
-    gap: 2rem;
-  }
-  
-  .tree-members {
-    gap: 1rem;
-  }
-  
-  .member-card {
-    min-width: 160px;
-    padding: 1rem;
-  }
-  
-  .member-avatar {
-    width: 3rem;
-    height: 3rem;
-    font-size: 1rem;
-  }
+  .family-tree-container { gap: 2rem; }
+  .tree-members { gap: 1rem; }
+  .member-card { min-width: 160px; padding: 1rem; }
+  .member-avatar { width: 3rem; height: 3rem; font-size: 1rem; }
 }
 </style>

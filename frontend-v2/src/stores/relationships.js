@@ -37,7 +37,7 @@ export const useRelationshipsStore = defineStore('relationships', () => {
   async function createRelationship(personId, relationshipData) {
     loading.value = true
     error.value = null
-    
+
     try {
       const newRelationship = await apiService.createRelationship(personId, relationshipData)
       relationships.value.push(newRelationship)
@@ -45,6 +45,25 @@ export const useRelationshipsStore = defineStore('relationships', () => {
     } catch (err) {
       error.value = err.message
       console.error('Failed to create relationship:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function createRelationshipWithNewPerson(personId, payload) {
+    loading.value = true
+    error.value = null
+
+    try {
+      const result = await apiService.createRelationshipWithNewPerson(personId, payload)
+      if (result?.relationship) {
+        relationships.value.push(result.relationship)
+      }
+      return result
+    } catch (err) {
+      error.value = err.message
+      console.error('Failed to create relationship with new person:', err)
       throw err
     } finally {
       loading.value = false
@@ -82,6 +101,7 @@ export const useRelationshipsStore = defineStore('relationships', () => {
     relationshipsByPersonId,
     fetchPersonRelationships,
     createRelationship,
+    createRelationshipWithNewPerson,
     deleteRelationship,
     clearError,
     clearRelationships

@@ -243,6 +243,102 @@ app.post('/api/persons/:personId/relationships', (req: Request, res: Response): 
   });
 });
 
+// CREATE a new person AND relate them to an existing person, atomically.
+// Body: { person: { first_name, last_name?, ... }, relationshipType, startDate?, endDate? }
+app.post('/api/persons/:personId/relationships/with-new-person', (req: Request, res: Response): void => {
+  const person1_id = parseInt(req.params.personId, 10);
+  const { person, relationshipType, startDate, endDate } = req.body || {};
+
+  if (!person || typeof person !== 'object') {
+    res.status(400).json({ message: 'person object is required' });
+    return;
+  }
+  if (!person.first_name) {
+    res.status(400).json({ message: 'person.first_name is required' });
+    return;
+  }
+  if (!relationshipType) {
+    res.status(400).json({ message: 'relationshipType is required' });
+    return;
+  }
+
+  const insertPersonSql = `INSERT INTO persons
+    (first_name, last_name, maiden_name, birth_date, death_date, gender, bio, profession, main_photo, location)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  const personParams = [
+    person.first_name,
+    person.last_name ?? null,
+    person.maiden_name ?? null,
+    person.birth_date ?? null,
+    person.death_date ?? null,
+    person.gender ?? null,
+    person.bio ?? null,
+    person.profession ?? null,
+    person.main_photo ?? null,
+    person.location ?? null,
+  ];
+
+  const insertRelationshipSql = `INSERT INTO relationships
+    (person1_id, person2_id, relationship_type, start_date, end_date)
+    VALUES (?, ?, ?, ?, ?)`;
+
+  db.serialize(() => {
+    db.run('BEGIN TRANSACTION');
+
+    db.run(insertPersonSql, personParams, function (personErr) {
+      if (personErr) {
+        db.run('ROLLBACK');
+        console.error('Error creating person (with relationship):', personErr.message);
+        res.status(500).json({ message: 'Failed to create person', error: personErr.message });
+        return;
+      }
+      const newPersonId = this.lastID;
+
+      db.run(
+        insertRelationshipSql,
+        [person1_id, newPersonId, relationshipType, startDate ?? null, endDate ?? null],
+        function (relErr) {
+          if (relErr) {
+            db.run('ROLLBACK');
+            if (relErr.message.includes('UNIQUE constraint failed')) {
+              res.status(409).json({ message: 'This relationship already exists.', error: relErr.message });
+              return;
+            }
+            if (relErr.message.includes('FOREIGN KEY')) {
+              res.status(400).json({ message: 'Invalid personId', error: relErr.message });
+              return;
+            }
+            console.error('Error creating relationship (with new person):', relErr.message);
+            res.status(500).json({ message: 'Failed to create relationship', error: relErr.message });
+            return;
+          }
+          const newRelationshipId = this.lastID;
+
+          db.run('COMMIT', (commitErr) => {
+            if (commitErr) {
+              console.error('Commit failed:', commitErr.message);
+              res.status(500).json({ message: 'Failed to commit transaction', error: commitErr.message });
+              return;
+            }
+            res.status(201).json({
+              message: 'Person and relationship created',
+              person: { id: newPersonId, ...person },
+              relationship: {
+                id: newRelationshipId,
+                person1_id,
+                person2_id: newPersonId,
+                relationship_type: relationshipType,
+                start_date: startDate ?? null,
+                end_date: endDate ?? null,
+              },
+            });
+          });
+        }
+      );
+    });
+  });
+});
+
 // GET all relationships for a specific person
 // This will return relationships where the person is either person1_id or person2_id
 app.get('/api/persons/:personId/relationships', (req: Request, res: Response) => {
@@ -251,11 +347,17 @@ app.get('/api/persons/:personId/relationships', (req: Request, res: Response) =>
     SELECT
       r.id,
       r.person1_id,
-      p1.first_name as person1_first_name,
-      p1.last_name as person1_last_name,
+      p1.first_name  as person1_first_name,
+      p1.last_name   as person1_last_name,
+      p1.birth_date  as person1_birth_date,
+      p1.death_date  as person1_death_date,
+      p1.main_photo  as person1_main_photo,
       r.person2_id,
-      p2.first_name as person2_first_name,
-      p2.last_name as person2_last_name,
+      p2.first_name  as person2_first_name,
+      p2.last_name   as person2_last_name,
+      p2.birth_date  as person2_birth_date,
+      p2.death_date  as person2_death_date,
+      p2.main_photo  as person2_main_photo,
       r.relationship_type,
       r.start_date,
       r.end_date

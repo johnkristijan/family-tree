@@ -74,6 +74,13 @@ class ApiService {
     })
   }
 
+  async createRelationshipWithNewPerson(personId, payload) {
+    return this.request(`/persons/${personId}/relationships/with-new-person`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
+  }
+
   async deleteRelationship(relationshipId) {
     return this.request(`/relationships/${relationshipId}`, {
       method: 'DELETE'
