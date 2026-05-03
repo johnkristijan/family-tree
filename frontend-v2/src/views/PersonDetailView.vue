@@ -153,15 +153,15 @@
                     Edit Details
                   </button>
                   
-                  <button 
-                    @click="$router.push(`/persons/${person.id}/family-tree`)"
+                  <router-link
+                    :to="`/persons/${person.id}/family-tree`"
                     class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center"
                   >
                     <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2V7m0 0V5a2 2 0 012-2h6l2 2h6a2 2 0 012 2v2M3 7h18M5 9h14" />
                     </svg>
                     View Family Tree
-                  </button>
+                  </router-link>
                   
                   <button 
                     @click="showPhotoUpload = true"

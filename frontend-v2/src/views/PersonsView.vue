@@ -185,74 +185,80 @@
           <div
             v-for="person in filteredAndSortedPersons"
             :key="person.id"
-            class="bg-white rounded-lg shadow hover:shadow-md transition-shadow p-6 border border-gray-200 cursor-pointer"
-            @click="goToPersonDetail(person.id)"
+            class="person-card bg-white rounded-lg shadow hover:shadow-md transition-shadow border border-gray-200 relative"
           >
-            <div class="flex items-start justify-between">
-              <div class="flex-1">
-                <h3 class="text-lg font-semibold text-gray-900 mb-2 hover:text-blue-600 transition-colors">
-                  {{ person.first_name }} {{ person.last_name }}
-                  <span v-if="person.maiden_name" class="text-sm text-gray-500 font-normal">
-                    ({{ person.maiden_name }})
-                  </span>
-                </h3>
-                
-                <div class="space-y-1 text-sm text-gray-600">
-                  <p v-if="person.birth_date">
-                    <span class="font-medium">Born:</span> {{ formatDate(person.birth_date) }}
-                  </p>
-                  <p v-if="person.death_date">
-                    <span class="font-medium">Died:</span> {{ formatDate(person.death_date) }}
-                  </p>
-                  <p v-if="person.gender">
-                    <span class="font-medium">Gender:</span> {{ person.gender }}
-                  </p>
-                  <p v-if="person.profession">
-                    <span class="font-medium">Profession:</span> {{ person.profession }}
-                  </p>
-                  <p v-if="person.location">
-                    <span class="font-medium">Location:</span> {{ person.location }}
-                  </p>
-                  <p class="text-xs text-gray-500 mt-2">
-                    <span class="font-medium">ID:</span> {{ person.id }}
-                  </p>
-                  <p class="text-xs text-gray-500">
-                    <span class="font-medium">Relationships:</span> {{ person.relationships_count || 0 }}
-                  </p>
-                </div>
+            <router-link
+              :to="`/persons/${person.id}`"
+              class="block p-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              :aria-label="`View ${person.first_name} ${person.last_name}`"
+            >
+              <div class="flex items-start">
+                <div class="flex-1 pr-24">
+                  <h3 class="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+                    {{ person.first_name }} {{ person.last_name }}
+                    <span v-if="person.maiden_name" class="text-sm text-gray-500 font-normal">
+                      ({{ person.maiden_name }})
+                    </span>
+                  </h3>
 
-                <p v-if="person.bio" class="mt-3 text-sm text-gray-700 line-clamp-3">
-                  {{ person.bio }}
-                </p>
-              </div>
-              
-              <div class="ml-4 flex-shrink-0">
-                <div class="flex items-center space-x-2">
-                  <button 
-                    @click.stop="editPerson(person)"
-                    class="text-blue-600 hover:text-blue-800 text-sm font-medium cursor-pointer"
-                  >
-                    Edit
-                  </button>
-                  <button 
-                    @click.stop="deletePerson(person.id)"
-                    class="text-red-600 hover:text-red-800 text-sm font-medium cursor-pointer"
-                  >
-                    Delete
-                  </button>
+                  <div class="space-y-1 text-sm text-gray-600">
+                    <p v-if="person.birth_date">
+                      <span class="font-medium">Born:</span> {{ formatDate(person.birth_date) }}
+                    </p>
+                    <p v-if="person.death_date">
+                      <span class="font-medium">Died:</span> {{ formatDate(person.death_date) }}
+                    </p>
+                    <p v-if="person.gender">
+                      <span class="font-medium">Gender:</span> {{ person.gender }}
+                    </p>
+                    <p v-if="person.profession">
+                      <span class="font-medium">Profession:</span> {{ person.profession }}
+                    </p>
+                    <p v-if="person.location">
+                      <span class="font-medium">Location:</span> {{ person.location }}
+                    </p>
+                    <p class="text-xs text-gray-500 mt-2">
+                      <span class="font-medium">ID:</span> {{ person.id }}
+                    </p>
+                    <p class="text-xs text-gray-500">
+                      <span class="font-medium">Relationships:</span> {{ person.relationships_count || 0 }}
+                    </p>
+                  </div>
+
+                  <p v-if="person.bio" class="mt-3 text-sm text-gray-700 line-clamp-3">
+                    {{ person.bio }}
+                  </p>
                 </div>
               </div>
-            </div>
-            
-            <!-- Click to view indicator -->
-            <div class="mt-4 pt-4 border-t border-gray-100">
-              <div class="flex items-center text-xs text-gray-500">
-                <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-                Click to view details
+
+              <!-- Click to view indicator -->
+              <div class="mt-4 pt-4 border-t border-gray-100">
+                <div class="flex items-center text-xs text-gray-500">
+                  <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  Click to view details
+                </div>
               </div>
+            </router-link>
+
+            <!-- Action buttons positioned outside the link so the card stays a single anchor -->
+            <div class="absolute top-6 right-6 flex items-center space-x-2 z-10">
+              <button
+                type="button"
+                @click="editPerson(person)"
+                class="text-blue-600 hover:text-blue-800 text-sm font-medium cursor-pointer bg-white/80 backdrop-blur-sm px-2 py-0.5 rounded"
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                @click="deletePerson(person.id)"
+                class="text-red-600 hover:text-red-800 text-sm font-medium cursor-pointer bg-white/80 backdrop-blur-sm px-2 py-0.5 rounded"
+              >
+                Delete
+              </button>
             </div>
           </div>
         </div>
@@ -351,10 +357,6 @@ export default {
         month: 'long',
         day: 'numeric'
       })
-    }
-
-    function goToPersonDetail(personId) {
-      router.push(`/persons/${personId}`)
     }
 
     function editPerson(person) {
@@ -569,7 +571,6 @@ export default {
       hasActiveFilters,
       fetchPersons,
       formatDate,
-      goToPersonDetail,
       editPerson,
       closePersonForm,
       handlePersonSubmit,

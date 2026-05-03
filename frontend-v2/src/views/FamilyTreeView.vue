@@ -67,11 +67,11 @@
                   <span class="text-sm font-medium text-gray-500">Parents</span>
                 </div>
                 <div class="tree-members parents-container">
-                  <div
+                  <router-link
                     v-for="parent in parents"
                     :key="parent.id"
+                    :to="personRoute(parent.id)"
                     class="tree-member parent-member"
-                    @click="navigateToPerson(parent.id)"
                   >
                     <div class="member-card">
                       <div v-if="parent.main_photo" class="member-avatar member-avatar-image">
@@ -90,7 +90,7 @@
                         <p class="member-age">{{ getAgeString(parent.birth_date, parent.death_date) }}</p>
                       </div>
                     </div>
-                  </div>
+                  </router-link>
                   <button type="button" class="tree-member add-member parent-add" @click="openAdd('parent')" :aria-label="parents.length ? 'Add another parent' : 'Add parent'">
                     <div class="member-card add-card">
                       <div class="member-avatar add-avatar">
@@ -143,11 +143,11 @@
                   <span class="text-sm font-medium text-gray-500">Siblings</span>
                 </div>
                 <div class="tree-members siblings-container">
-                  <div
+                  <router-link
                     v-for="sibling in siblings"
                     :key="sibling.id"
+                    :to="personRoute(sibling.id)"
                     class="tree-member sibling-member"
-                    @click="navigateToPerson(sibling.id)"
                   >
                     <div class="member-card">
                       <div v-if="sibling.main_photo" class="member-avatar member-avatar-image">
@@ -166,7 +166,7 @@
                         <p class="member-age">{{ getAgeString(sibling.birth_date, sibling.death_date) }}</p>
                       </div>
                     </div>
-                  </div>
+                  </router-link>
                   <button type="button" class="tree-member add-member sibling-add" @click="openAdd('sibling')" :aria-label="siblings.length ? 'Add another sibling' : 'Add sibling'">
                     <div class="member-card add-card">
                       <div class="member-avatar add-avatar">
@@ -189,11 +189,11 @@
                   <span class="text-sm font-medium text-gray-500">Children</span>
                 </div>
                 <div class="tree-members children-container">
-                  <div
+                  <router-link
                     v-for="child in children"
                     :key="child.id"
+                    :to="personRoute(child.id)"
                     class="tree-member child-member"
-                    @click="navigateToPerson(child.id)"
                   >
                     <div class="member-card">
                       <div v-if="child.main_photo" class="member-avatar member-avatar-image">
@@ -212,7 +212,7 @@
                         <p class="member-age">{{ getAgeString(child.birth_date, child.death_date) }}</p>
                       </div>
                     </div>
-                  </div>
+                  </router-link>
                   <button type="button" class="tree-member add-member child-add" @click="openAdd('child')" :aria-label="children.length ? 'Add another child' : 'Add child'">
                     <div class="member-card add-card">
                       <div class="member-avatar add-avatar">
@@ -235,11 +235,11 @@
                   <span class="text-sm font-medium text-gray-500">Spouse(s)</span>
                 </div>
                 <div class="tree-members spouse-container">
-                  <div
+                  <router-link
                     v-for="spouse in spouses"
                     :key="spouse.id"
+                    :to="personRoute(spouse.id)"
                     class="tree-member spouse-member"
-                    @click="navigateToPerson(spouse.id)"
                   >
                     <div class="member-card">
                       <div v-if="spouse.main_photo" class="member-avatar member-avatar-image">
@@ -258,7 +258,7 @@
                         <p class="member-age">{{ getAgeString(spouse.birth_date, spouse.death_date) }}</p>
                       </div>
                     </div>
-                  </div>
+                  </router-link>
                   <button type="button" class="tree-member add-member spouse-add" @click="openAdd('spouse')" :aria-label="spouses.length ? 'Add another spouse' : 'Add spouse'">
                     <div class="member-card add-card">
                       <div class="member-avatar add-avatar">
@@ -322,7 +322,7 @@
 
 <script>
 import { ref, onMounted, computed, reactive, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useRelationshipsStore } from '../stores/relationships'
 import { usePersonsStore } from '../stores/persons'
 import apiService from '../services/api'
@@ -336,7 +336,6 @@ export default {
   components: { QuickAddRelation },
   setup() {
     const route = useRoute()
-    const router = useRouter()
     const person = ref(null)
     const loading = ref(true)
     const error = ref(null)
@@ -495,12 +494,10 @@ export default {
       return typeMap[type] || type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
     }
 
-    function navigateToPerson(personId) {
-      if (stayInTreeView.value) {
-        router.push(`/persons/${personId}/family-tree`)
-      } else {
-        router.push(`/persons/${personId}`)
-      }
+    function personRoute(personId) {
+      return stayInTreeView.value
+        ? `/persons/${personId}/family-tree`
+        : `/persons/${personId}`
     }
 
     function getProfilePictureUrl(url) {
@@ -546,7 +543,7 @@ export default {
       getInitials,
       getAgeString,
       formatRelationshipType,
-      navigateToPerson,
+      personRoute,
       getProfilePictureUrl
     }
   }
@@ -591,8 +588,11 @@ export default {
 }
 
 .tree-member {
+  display: block;
   cursor: pointer;
   transition: transform 0.2s ease-in-out;
+  text-decoration: none;
+  color: inherit;
 }
 
 .tree-member:hover {

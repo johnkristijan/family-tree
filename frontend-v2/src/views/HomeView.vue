@@ -57,11 +57,11 @@
       <div v-if="recentPersons.length > 0" class="mb-16">
         <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">Recently Added</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div
+          <router-link
             v-for="person in recentPersons"
             :key="person.id"
-            class="bg-white rounded-xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow duration-300 cursor-pointer"
-            @click="goToPersonDetail(person.id)"
+            :to="`/persons/${person.id}`"
+            class="block bg-white rounded-xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow duration-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
           >
             <div class="flex items-center mb-4">
               <div class="bg-gradient-to-r from-emerald-500 to-blue-500 text-white rounded-full w-12 h-12 flex items-center justify-center font-bold mr-4">
@@ -83,7 +83,7 @@
               <span v-if="person.birth_date">Born {{ formatDate(person.birth_date) }}</span>
               <span class="text-emerald-600 hover:text-emerald-700">View Details →</span>
             </div>
-          </div>
+          </router-link>
         </div>
       </div>
 
@@ -143,7 +143,6 @@
 import { usePersonsStore } from '../stores/persons'
 import { storeToRefs } from 'pinia'
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import PersonForm from '../components/PersonForm.vue'
 import { useToast } from '../composables/useToast'
 import apiService from '../services/api'
@@ -154,7 +153,6 @@ export default {
     PersonForm
   },
   setup() {
-    const router = useRouter()
     const personsStore = usePersonsStore()
     const { persons, loading, personsCount } = storeToRefs(personsStore)
     const { fetchPersons, createPerson } = personsStore
@@ -212,10 +210,6 @@ export default {
       return first + last
     }
 
-    function goToPersonDetail(personId) {
-      router.push(`/persons/${personId}`)
-    }
-
     async function handlePersonSubmit(personData) {
       try {
         await createPerson(personData)
@@ -242,7 +236,6 @@ export default {
       showPersonForm,
       formatDate,
       getInitials,
-      goToPersonDetail,
       handlePersonSubmit
     }
   }
