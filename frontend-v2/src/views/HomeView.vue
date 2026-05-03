@@ -141,12 +141,12 @@
 
 <script>
 import { usePersonsStore } from '../stores/persons'
-import { useRelationshipsStore } from '../stores/relationships'
 import { storeToRefs } from 'pinia'
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import PersonForm from '../components/PersonForm.vue'
 import { useToast } from '../composables/useToast'
+import apiService from '../services/api'
 
 export default {
   name: 'HomeView',
@@ -156,16 +156,24 @@ export default {
   setup() {
     const router = useRouter()
     const personsStore = usePersonsStore()
-    const relationshipsStore = useRelationshipsStore()
     const { persons, loading, personsCount } = storeToRefs(personsStore)
-    const { relationships } = storeToRefs(relationshipsStore)
     const { fetchPersons, createPerson } = personsStore
     const { showSuccess, showError } = useToast()
-    
+
     const showPersonForm = ref(false)
 
-    // Computed properties for statistics
-    const relationshipsCount = computed(() => relationships.value.length)
+    // Stats from /api/stats — the relationships count can't be derived locally
+    // because the relationships store only ever holds one person's links at a time.
+    const relationshipsCount = ref(0)
+
+    async function fetchStats() {
+      try {
+        const stats = await apiService.getStats()
+        relationshipsCount.value = stats?.relationships ?? 0
+      } catch (err) {
+        console.error('Failed to fetch stats:', err)
+      }
+    }
     
     const generationsCount = computed(() => {
       if (persons.value.length === 0) return 0
@@ -221,6 +229,7 @@ export default {
 
     onMounted(() => {
       fetchPersons()
+      fetchStats()
     })
 
     return {

@@ -33,6 +33,11 @@ class ApiService {
     })
   }
 
+  // Stats
+  async getStats() {
+    return this.request('/stats')
+  }
+
   // Person endpoints
   async getPersons() {
     return this.request('/persons')

@@ -484,6 +484,26 @@ app.delete('/api/persons/:personId/photo', (req: Request, res: Response): void =
   });
 });
 
+// ===== STATS =====
+// Aggregate counts for the home page KPIs. One round-trip, cheap query.
+app.get('/api/stats', (_req: Request, res: Response) => {
+  const sql = `
+    SELECT
+      (SELECT COUNT(*) FROM persons) AS persons_count,
+      (SELECT COUNT(*) FROM relationships) AS relationships_count
+  `;
+  db.get(sql, [], (err, row: any) => {
+    if (err) {
+      console.error('Error fetching stats:', err.message);
+      return res.status(500).json({ message: 'Failed to fetch stats', error: err.message });
+    }
+    res.status(200).json({
+      persons: row?.persons_count ?? 0,
+      relationships: row?.relationships_count ?? 0,
+    });
+  });
+});
+
 // Root path
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello from the Herrmann Family Tree Backend! Database is connected.');
