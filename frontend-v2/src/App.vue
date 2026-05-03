@@ -11,15 +11,22 @@
             >
               Home
             </router-link>
-            <router-link 
-              to="/persons" 
+            <router-link
+              to="/persons"
               class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200"
               :class="$route.path === '/persons' ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
             >
               Family Members
             </router-link>
-            <router-link 
-              to="/about" 
+            <router-link
+              to="/calendar"
+              class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200"
+              :class="$route.path === '/calendar' ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+            >
+              Calendar
+            </router-link>
+            <router-link
+              to="/about"
               class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200"
               :class="$route.path === '/about' ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
             >

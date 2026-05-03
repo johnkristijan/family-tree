@@ -4,12 +4,18 @@ import AboutView from '../views/AboutView.vue'
 import PersonsView from '../views/PersonsView.vue'
 import PersonDetailView from '../views/PersonDetailView.vue'
 import FamilyTreeView from '../views/FamilyTreeView.vue'
+import CalendarView from '../views/CalendarView.vue'
 
 const routes = [
   {
     path: '/',
     name: 'Home',
     component: HomeView
+  },
+  {
+    path: '/calendar',
+    name: 'Calendar',
+    component: CalendarView
   },
   {
     path: '/about',

@@ -38,6 +38,11 @@ class ApiService {
     return this.request('/stats')
   }
 
+  // Calendar (births, deaths, marriages with dates)
+  async getCalendar() {
+    return this.request('/calendar')
+  }
+
   // Person endpoints
   async getPersons() {
     return this.request('/persons')

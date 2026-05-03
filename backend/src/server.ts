@@ -484,6 +484,44 @@ app.delete('/api/persons/:personId/photo', (req: Request, res: Response): void =
   });
 });
 
+// ===== CALENDAR =====
+// Single payload powering the calendar page: every person with a birth or
+// death date, plus every marriage that has a start_date. Frontend slices
+// these into "today / this week / next month / per-month accordions".
+app.get('/api/calendar', (_req: Request, res: Response) => {
+  const personsSql = `
+    SELECT id, first_name, last_name, birth_date, death_date, main_photo
+    FROM persons
+    WHERE (birth_date IS NOT NULL AND birth_date != '')
+       OR (death_date IS NOT NULL AND death_date != '')
+  `;
+  const marriagesSql = `
+    SELECT
+      r.id, r.start_date, r.end_date,
+      p1.id  AS p1_id, p1.first_name AS p1_first_name, p1.last_name AS p1_last_name, p1.main_photo AS p1_main_photo,
+      p2.id  AS p2_id, p2.first_name AS p2_first_name, p2.last_name AS p2_last_name, p2.main_photo AS p2_main_photo
+    FROM relationships r
+    JOIN persons p1 ON r.person1_id = p1.id
+    JOIN persons p2 ON r.person2_id = p2.id
+    WHERE r.relationship_type = 'spouse_of'
+      AND r.start_date IS NOT NULL
+      AND r.start_date != ''
+  `;
+  db.all(personsSql, [], (pErr, persons) => {
+    if (pErr) {
+      console.error('Calendar persons query failed:', pErr.message);
+      return res.status(500).json({ message: 'Failed to fetch calendar', error: pErr.message });
+    }
+    db.all(marriagesSql, [], (mErr, marriages) => {
+      if (mErr) {
+        console.error('Calendar marriages query failed:', mErr.message);
+        return res.status(500).json({ message: 'Failed to fetch calendar', error: mErr.message });
+      }
+      res.status(200).json({ persons, marriages });
+    });
+  });
+});
+
 // ===== STATS =====
 // Aggregate counts for the home page KPIs. One round-trip, cheap query.
 app.get('/api/stats', (_req: Request, res: Response) => {
